@@ -630,7 +630,7 @@ export default function Player({
   const aspect = compact ? 'aspect-video' : theater || fullscreen ? 'aspect-video' : 'aspect-video';
 
   return (
-    <div ref={rootRef} className="w-full">
+    <div ref={rootRef} className="flex w-full flex-col">
       {/* server bar */}
       <div className="mb-2.5 flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-2">
@@ -780,7 +780,7 @@ export default function Player({
         layout
         initial={false}
         animate={{ scale: 1 }}
-        className={`film-grain relative overflow-hidden rounded-2xl border bg-black shadow-cinema transition-[max-height] duration-500 ease-cinema ${
+        className={`film-grain relative overflow-hidden rounded-xl border bg-black shadow-cinema transition-[max-height] duration-500 ease-cinema max-sm:order-first max-sm:-mx-3 max-sm:mb-3 sm:rounded-2xl ${
           fullscreen ? 'h-screen rounded-none border-0' : `${aspect} border-white/[0.07] ${theater ? 'max-h-[78vh]' : ''}`
         }`}
       >

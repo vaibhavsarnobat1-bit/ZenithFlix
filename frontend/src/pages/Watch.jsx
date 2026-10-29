@@ -176,7 +176,7 @@ export default function Watch() {
 
         <div className="relative mx-auto max-w-[1160px] px-4 pb-6 pt-4 sm:px-6">
           {/* header */}
-          <motion.div variants={stagger(0, 0.06)} initial="hidden" animate="show" className="mb-4 flex flex-wrap items-center gap-3">
+          <motion.div variants={stagger(0, 0.06)} initial="hidden" animate="show" className="mb-4 flex flex-wrap items-center gap-2.5 sm:gap-3">
             <motion.button
               variants={item}
               whileHover={{ x: -3 }}
@@ -186,7 +186,7 @@ export default function Watch() {
               <ArrowLeft className="h-3.5 w-3.5" /> Back
             </motion.button>
 
-            <div className="min-w-0 flex-1">
+            <div className="order-last min-w-0 basis-full sm:order-none sm:flex-1 sm:basis-auto">
               <AnimatePresence mode="wait">
                 <motion.h1
                   key={`${label}-${season}-${episode}`}
@@ -215,7 +215,7 @@ export default function Watch() {
               </p>
             </div>
 
-            <motion.div variants={item} className="flex items-center gap-2">
+            <motion.div variants={item} className="ml-auto flex items-center gap-2 sm:ml-0">
               <button onClick={toggleSave} className={`flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-[12.5px] font-bold transition-colors ${saved ? 'border-lime/45 bg-lime/12 text-lime' : 'border-white/12 bg-white/[0.04] text-textSub hover:text-white'}`}>
                 {saved ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />} My List
               </button>
@@ -228,7 +228,7 @@ export default function Watch() {
                 transition={spring.snappy}
                 onClick={openParty}
                 disabled={creatingParty}
-                className="flex items-center gap-2 rounded-xl border border-secondary/45 bg-secondary/15 px-4 py-2 text-[12.5px] font-bold text-white hover:bg-secondary/25"
+                className="hidden items-center gap-2 rounded-xl border border-secondary/45 bg-secondary/15 px-4 py-2 text-[12.5px] font-bold text-white hover:bg-secondary/25 sm:flex"
               >
                 <Users className="h-3.5 w-3.5" /> {creatingParty ? 'Creating…' : 'Create Watch Party'}
               </motion.button>
@@ -275,7 +275,7 @@ export default function Watch() {
 
           {/* meta grid */}
           <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
-            <div>
+            <div className="min-w-0">
               <p className="text-[14.5px] leading-relaxed text-textMain">{(details.overview || '').trim() || 'No synopsis available yet.'}</p>
 
               <div className="mt-4 flex flex-wrap gap-2 text-[11.5px] text-textMuted">
@@ -293,7 +293,7 @@ export default function Watch() {
               {details.credits?.cast?.length > 0 && (
                 <div className="mt-6">
                   <h3 className="mb-2.5 text-[10px] font-bold uppercase tracking-[0.18em] text-textMuted">Top billed</h3>
-                  <motion.div variants={stagger(0, 0.04)} initial="hidden" whileInView="show" viewport={{ once: true }} className="no-scrollbar flex gap-3 overflow-x-auto pb-1">
+                  <motion.div variants={stagger(0, 0.04)} initial="hidden" whileInView="show" viewport={{ once: true }} className="no-scrollbar flex w-full gap-3 overflow-x-auto pb-1">
                     {details.credits.cast.slice(0, 14).map((c) => (
                       <motion.div key={c.id} variants={item} className="w-[86px] flex-shrink-0 text-center">
                         <div className="h-[86px] w-[86px] overflow-hidden rounded-2xl border border-white/10">
@@ -369,12 +369,12 @@ export default function Watch() {
             </div>
 
             {/* side rail */}
-            <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-              <div className="overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.025]">
-                <motion.div layoutId={`poster-${type}-${id}`} className="aspect-[2/3] w-full">
+            <aside className="min-w-0 space-y-4 lg:sticky lg:top-24 lg:self-start">
+              <div className="flex items-center gap-3 overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.025] p-2.5 sm:block sm:p-0">
+                <motion.div layoutId={`poster-${type}-${id}`} className="aspect-[2/3] w-[92px] flex-shrink-0 overflow-hidden rounded-xl sm:w-full sm:rounded-none">
                   <SmartImage src={poster(details.poster_path, 'poster2x')} alt={label} className="h-full w-full" fallbackLabel={label} />
                 </motion.div>
-                <div className="flex items-center gap-3 p-3">
+                <div className="flex items-center gap-3 p-0.5 sm:p-3">
                   <RatingRing value={Number(details.vote_average || 0)} size={42} />
                   <div className="text-[11px] leading-snug text-textMuted">
                     <div className="font-bold text-textMain">{details.vote_count?.toLocaleString?.() || 0} votes</div>

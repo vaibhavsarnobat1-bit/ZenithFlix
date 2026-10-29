@@ -25,14 +25,20 @@ export default function IntroSplash() {
     }
   });
 
+  /* enter → exit → gone, one transition per effect.
+     Scheduling both timers from the `enter` pass used to cancel the second one
+     the moment `exit` landed, which left an invisible curtain over the whole
+     site: opacity 0, scroll locked, every tap swallowed. */
   useEffect(() => {
-    if (phase !== 'enter') return undefined;
-    const t1 = setTimeout(() => setPhase('exit'), reduce ? 400 : ENTER_MS + HOLD_MS);
-    const t2 = setTimeout(() => setPhase('gone'), reduce ? 650 : ENTER_MS + HOLD_MS + EXIT_MS);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
+    if (phase === 'enter') {
+      const t = setTimeout(() => setPhase('exit'), reduce ? 400 : ENTER_MS + HOLD_MS);
+      return () => clearTimeout(t);
+    }
+    if (phase === 'exit') {
+      const t = setTimeout(() => setPhase('gone'), reduce ? 150 : EXIT_MS);
+      return () => clearTimeout(t);
+    }
+    return undefined;
   }, [phase, reduce]);
 
   /* lock scroll while the curtain is up */
@@ -56,7 +62,9 @@ export default function IntroSplash() {
       animate={{ opacity: phase === 'exit' ? 0 : 1 }}
       transition={{ duration: reduce ? 0.15 : EXIT_MS / 1000, ease: 'easeInOut' }}
       className="fixed inset-0 z-[200] flex flex-col items-center justify-center overflow-hidden bg-[#05060d]"
+      style={{ pointerEvents: phase === 'exit' ? 'none' : 'auto' }}
       onClick={() => setPhase('exit')}
+      aria-hidden={phase === 'exit'}
       role="presentation"
     >
       {/* cinema backdrop */}
