@@ -110,10 +110,9 @@ export const ambient = {
 
 /** Poster-card hover: leans back slightly and floats upward in z-space. */
 export const tiltCard = {
-  whileHover: { rotateX: 6, y: -8, scale: 1.04, z: 40 },
-  whileTap: { rotateX: 2, scale: 0.98, z: 10 },
-  style: { transformPerspective: 900, transformStyle: 'preserve-3d' },
-  transition: { type: 'spring', stiffness: 300, damping: 22, mass: 0.7 },
+  whileHover: { y: -6, scale: 1.04 },
+  whileTap: { scale: 0.98 },
+  transition: { type: 'spring', stiffness: 320, damping: 24, mass: 0.7 },
 };
 
 /** Foreground layer of a 3D card (buttons/badges that sit "on top" of it). */

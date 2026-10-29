@@ -65,7 +65,7 @@ export function TitleCard({ title, index = 0, variant = 'poster', progress, onOp
           hovered ? 'border-primary/45 shadow-lift' : 'border-white/[0.06]'
         } ${variant === 'landscape' ? 'aspect-video' : 'aspect-[2/3]'}`}
       >
-        <SmartImage src={src} alt={label} className="h-full w-full" fallbackLabel={label} loading={index > 8 ? 'lazy' : 'eager'} />
+        <SmartImage src={src} alt={label} className="h-full w-full" fallbackLabel={label} loading="eager" />
 
         {/* rank badge for numbered shelves */}
         {rank && (

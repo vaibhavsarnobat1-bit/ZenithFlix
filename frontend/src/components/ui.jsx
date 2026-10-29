@@ -75,32 +75,44 @@ export function PosterFallback({ label }) {
 }
 
 /** Image that swaps itself out for a graceful fallback when TMDB 404s a path. */
-export function SmartImage({ src, alt, className = '', fallbackLabel, imgClassName = '', loading = 'lazy' }) {
+export function SmartImage({ src, alt, className = '', fallbackLabel, imgClassName = '', loading = 'eager' }) {
   const [failed, setFailed] = useState(!src);
   const [loaded, setLoaded] = useState(false);
+  const imgRef = useRef(null);
 
   useEffect(() => {
     setFailed(!src);
-    setLoaded(false);
+    if (!src) {
+      setLoaded(false);
+      return;
+    }
+    if (imgRef.current && imgRef.current.complete && imgRef.current.naturalWidth > 0) {
+      setLoaded(true);
+    }
   }, [src]);
 
   return (
     <div className={`relative overflow-hidden bg-surfaceHigh ${className}`}>
       {!failed && (
-        <motion.img
+        <img
+          ref={(node) => {
+            imgRef.current = node;
+            if (node && node.complete && node.naturalWidth > 0 && !loaded) {
+              setLoaded(true);
+            }
+          }}
           src={src}
           alt={alt}
           loading={loading}
           decoding="async"
           onError={() => setFailed(true)}
           onLoad={() => setLoaded(true)}
-          initial={{ opacity: 0, scale: 1.06 }}
-          animate={{ opacity: loaded ? 1 : 0, scale: loaded ? 1 : 1.06 }}
-          transition={spring.soft}
-          className={`h-full w-full object-cover ${imgClassName}`}
+          className={`h-full w-full object-cover transition-opacity duration-300 ${
+            loaded ? 'opacity-100' : 'opacity-0'
+          } ${imgClassName}`}
         />
       )}
-      {!loaded && !failed && <div className="absolute inset-0 shimmer" />}
+      {!loaded && !failed && <div className="pointer-events-none absolute inset-0 shimmer" />}
       {failed && <PosterFallback label={fallbackLabel || alt} />}
     </div>
   );
