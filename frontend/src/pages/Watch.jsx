@@ -171,7 +171,7 @@ export default function Watch() {
 
   return (
     <div className="min-h-screen bg-background pb-20 pt-[calc(var(--nav-h,94px)+14px)]">
-      <div className="film-grain relative">
+      <div className="film-grain relative overflow-x-clip">
         <div className="absolute inset-0 bg-[radial-gradient(900px_340px_at_50%_0%,rgba(255,46,85,0.13),transparent_70%)]" />
 
         <div className="relative mx-auto max-w-[1160px] px-4 pb-6 pt-4 sm:px-6">

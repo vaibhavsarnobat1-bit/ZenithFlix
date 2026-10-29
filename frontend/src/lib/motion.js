@@ -21,8 +21,8 @@ export const spring = {
 
 /** Blur-in entrance: the eye reads this as "coming forward", not "fading". */
 export const rise = {
-  hidden: { opacity: 0, y: 18, filter: 'blur(8px)' },
-  show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: spring.soft },
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: spring.soft },
 };
 
 export const fade = {
@@ -37,9 +37,9 @@ export const stagger = (delayChildren = 0.04, staggerChildren = 0.055) => ({
 });
 
 export const item = {
-  hidden: { opacity: 0, y: 16, filter: 'blur(6px)' },
-  show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: spring.soft },
-  exit: { opacity: 0, y: -8, filter: 'blur(4px)', transition: { duration: 0.18 } },
+  hidden: { opacity: 0, y: 14 },
+  show: { opacity: 1, y: 0, transition: spring.soft },
+  exit: { opacity: 0, y: -6, transition: { duration: 0.16 } },
 };
 
 /** Horizontal carousel entry — cards slide in from the scroll direction. */
@@ -49,9 +49,9 @@ export const cardIn = {
 };
 
 export const sheet = {
-  hidden: { opacity: 0, y: '6%', scale: 0.97, filter: 'blur(10px)' },
-  show: { opacity: 1, y: 0, scale: 1, filter: 'blur(0px)', transition: spring.sheet },
-  exit: { opacity: 0, y: '4%', scale: 0.985, filter: 'blur(8px)', transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } },
+  hidden: { opacity: 0, y: '6%', scale: 0.97 },
+  show: { opacity: 1, y: 0, scale: 1, transition: spring.sheet },
+  exit: { opacity: 0, y: '4%', scale: 0.985, transition: { duration: 0.2, ease: [0.4, 0, 1, 1] } },
 };
 
 export const scrim = {
@@ -137,11 +137,11 @@ export const iconOrbit = {
 
 /** Dropdowns / sheets: swing down from a tilted plane. */
 export const flipIn3d = {
-  hidden: { opacity: 0, rotateX: -14, y: -8, scale: 0.97, filter: 'blur(6px)' },
-  show: { opacity: 1, rotateX: 0, y: 0, scale: 1, filter: 'blur(0px)',
-          transition: { type: 'spring', stiffness: 240, damping: 24 } },
-  exit: { opacity: 0, rotateX: -10, y: -6, scale: 0.97,
-          transition: { duration: 0.18, ease: [0.4, 0, 1, 1] } },
+  hidden: { opacity: 0, rotateX: -10, y: -6, scale: 0.98 },
+  show: { opacity: 1, rotateX: 0, y: 0, scale: 1,
+          transition: { type: 'spring', stiffness: 260, damping: 24 } },
+  exit: { opacity: 0, rotateX: -8, y: -4, scale: 0.98,
+          transition: { duration: 0.16, ease: [0.4, 0, 1, 1] } },
 };
 
 /** Search-open click: the magnifier does a full 3D barrel-roll flip. */
@@ -153,18 +153,18 @@ export const searchFlip = {
 
 /** 3D entrance for grids — items swing up from below on the X axis. */
 export const item3d = {
-  hidden: { opacity: 0, y: 26, rotateX: -14, scale: 0.94, filter: 'blur(8px)' },
-  show: { opacity: 1, y: 0, rotateX: 0, scale: 1, filter: 'blur(0px)',
+  hidden: { opacity: 0, y: 20, rotateX: -10, scale: 0.96 },
+  show: { opacity: 1, y: 0, rotateX: 0, scale: 1,
           transition: { ...spring.soft, transformPerspective: 800 } },
-  exit: { opacity: 0, y: -10, rotateX: 8, transition: { duration: 0.18 } },
+  exit: { opacity: 0, y: -8, rotateX: 6, transition: { duration: 0.16 } },
 };
 
 /** Sheet/modal entrance with a cinematic tilt. */
 export const sheet3d = {
-  hidden: { opacity: 0, y: '8%', rotateX: 8, scale: 0.94, filter: 'blur(12px)' },
-  show: { opacity: 1, y: 0, rotateX: 0, scale: 1, filter: 'blur(0px)', transition: spring.sheet },
-  exit: { opacity: 0, y: '5%', rotateX: 5, scale: 0.97, filter: 'blur(8px)',
-          transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } },
+  hidden: { opacity: 0, y: '6%', rotateX: 6, scale: 0.95 },
+  show: { opacity: 1, y: 0, rotateX: 0, scale: 1, transition: spring.sheet },
+  exit: { opacity: 0, y: '4%', rotateX: 4, scale: 0.97,
+          transition: { duration: 0.2, ease: [0.4, 0, 1, 1] } },
 };
 
 /** Ambient float — panels drift gently in z-space so screens never feel dead. */
