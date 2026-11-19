@@ -340,6 +340,18 @@ const PROVIDERS = [
       tv: 'https://nxsha.space/embed/tv/{tmdbId}/{season}/{episode}?lang=hindi&autoplay=true',
     },
   }),
+  P('autoembed-nitro', '⚡ Nitro · Multi-Lang HD', {
+    kind: 'embed',
+    blurb: 'AutoEmbed Nitro Multi-Language HD stream (OrVid).',
+    quality: '1080p',
+    tier: 1,
+    subs: true,
+    sandboxOk: false,
+    patterns: {
+      movie: 'https://nxsha.space/embed/movie/{tmdbId}?lang=hindi&autoplay=true&one_server=true&server=OrVid-[Multi-Lang]',
+      tv: 'https://nxsha.space/embed/tv/{tmdbId}/{season}/{episode}?lang=hindi&autoplay=true&one_server=true&server=OrVid-[Multi-Lang]',
+    },
+  }),
   P('autoembed-tamil', '⚡ AutoEmbed · Tamil Dub', {
     kind: 'embed',
     blurb: 'AutoEmbed direct Tamil Dub server stream (?lang=tamil).',
@@ -488,7 +500,7 @@ const PROVIDERS = [
   }),
 ];
 
-const FALLBACK_ORDER = ['vidsrcpm', 'autoembed-multi', 'autoembed-hindi', 'zxc-hindi', 'autoembed-tamil', 'autoembed-telugu', 'videasy', 'autoembed', 'vidlink', 'smashy', '2embed', '2embedskin', 'vidfast', 'vidfastvc'];
+const FALLBACK_ORDER = ['autoembed-multi', 'autoembed-hindi', 'autoembed-nitro', 'zxc-hindi', 'vidsrcpm', 'autoembed-tamil', 'autoembed-telugu', 'vidlink', 'videasy', 'autoembed', 'smashy', '2embed', '2embedskin', 'vidfast', 'vidfastvc'];
 
 /* ──────────────────────────────────────────────────────────────
    Embed-host reachability — mirror of GET /api/proxy/health

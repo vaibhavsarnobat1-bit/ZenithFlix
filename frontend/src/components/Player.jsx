@@ -38,7 +38,7 @@ const DEFAULT_QUALITY = '1080';
 
 /** Dub shortcuts map to embed hosts that request the language via URL param. */
 const DUB_SERVER = {
-  hi: ['autoembed-hindi', 'autoembed-multi', 'zxc-hindi', 'embed-su-hindi', 'moviebox-hindi'],
+  hi: ['autoembed-hindi', 'autoembed-nitro', 'autoembed-multi', 'zxc-hindi', 'embed-su-hindi', 'moviebox-hindi'],
   ta: ['autoembed-tamil', 'autoembed-multi', 'zxc-tamil'],
   te: ['autoembed-telugu', 'autoembed-multi', 'zxc-telugu'],
   ml: ['autoembed-multi'],
@@ -919,7 +919,7 @@ export default function Player({
               onError={() => setFailed(true)}
               allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
               allowFullScreen
-              referrerPolicy="no-referrer"
+              referrerPolicy="origin-when-cross-origin"
               className={`absolute inset-0 z-10 h-full w-full border-0 ${ready ? 'opacity-100' : 'opacity-0'} transition-opacity duration-500`}
             />
           ) : (

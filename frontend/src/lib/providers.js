@@ -42,6 +42,11 @@ const FALLBACK = [
     patterns: { movie: 'https://nxsha.space/embed/movie/{tmdbId}?lang=hindi&autoplay=true', tv: 'https://nxsha.space/embed/tv/{tmdbId}/{season}/{episode}?lang=hindi&autoplay=true' },
   },
   {
+    id: 'autoembed-nitro', label: '⚡ Nitro · Multi-Lang HD', kind: 'embed', quality: '1080p', tier: 1, subs: true, sandboxOk: false,
+    blurb: 'AutoEmbed Nitro Multi-Language HD stream (OrVid).',
+    patterns: { movie: 'https://nxsha.space/embed/movie/{tmdbId}?lang=hindi&autoplay=true&one_server=true&server=OrVid-[Multi-Lang]', tv: 'https://nxsha.space/embed/tv/{tmdbId}/{season}/{episode}?lang=hindi&autoplay=true&one_server=true&server=OrVid-[Multi-Lang]' },
+  },
+  {
     id: 'autoembed-tamil', label: '⚡ AutoEmbed · Tamil Dub', kind: 'embed', quality: '1080p', tier: 2, subs: true, sandboxOk: false,
     blurb: 'AutoEmbed direct Tamil Dub server stream (?lang=tamil).',
     patterns: { movie: 'https://nxsha.space/embed/movie/{tmdbId}?lang=tamil&autoplay=true', tv: 'https://nxsha.space/embed/tv/{tmdbId}/{season}/{episode}?lang=tamil&autoplay=true' },
@@ -135,21 +140,21 @@ const FALLBACK = [
   },
 ].map(unsupportedAudio);
 
-const FALLBACK_ORDER = ['vidsrcpm', 'autoembed-multi', 'autoembed-hindi', 'zxc-hindi', 'autoembed-tamil', 'autoembed-telugu', 'videasy', 'autoembed', 'vidlink', 'smashy', '2embed', '2embedskin', 'vidfast', 'vidfastvc', 'embed-su-hindi', 'moviebox-hindi'];
+const FALLBACK_ORDER = ['autoembed-multi', 'autoembed-hindi', 'autoembed-nitro', 'zxc-hindi', 'vidsrcpm', 'autoembed-tamil', 'autoembed-telugu', 'vidlink', 'videasy', 'autoembed', 'smashy', '2embed', '2embedskin', 'vidfast', 'vidfastvc', 'embed-su-hindi', 'moviebox-hindi'];
 
 // Hosts that detect our pop-up cage and refuse to play inside it, measured by
 // reading each host's own page (2Embed ships a "Sandbox not allowed" overlay)
 // and confirmed in a live browser for VidLink and the ZXCStream dub servers.
-const CAGE_SNIFFERS = ['vidlink', 'autoembed-multi', 'autoembed-hindi', 'autoembed-tamil', 'autoembed-telugu', 'zxc-hindi', 'zxc-tamil', 'zxc-telugu', '2embed', '2embedskin'];
+const CAGE_SNIFFERS = ['vidlink', 'autoembed-multi', 'autoembed-hindi', 'autoembed-nitro', 'autoembed-tamil', 'autoembed-telugu', 'zxc-hindi', 'zxc-tamil', 'zxc-telugu', '2embed', '2embedskin'];
 for (const p of FALLBACK) {
   if (p.kind === 'embed') p.sandboxOk = !CAGE_SNIFFERS.includes(p.id);
 }
 
 /**
  * Server a viewer lands on before the backend health probe answers.
- * VidSrc.pm as default — reliable and fast.
+ * AutoEmbed Multi-Audio (Nitro HD) as default — gives in-player Multi-Audio menu (Hindi, Telugu, Tamil) and 1080p!
  */
-export const DEFAULT_SERVER = 'vidsrcpm';
+export const DEFAULT_SERVER = 'autoembed-multi';
 
 let registry = null;
 let healthPromise = null;
