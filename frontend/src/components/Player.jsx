@@ -986,34 +986,35 @@ export default function Player({
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.div>
 
-      {/* Controls outside the iframe so they always receive clicks reliably */}
-      <div className="mt-1.5 flex items-center justify-end gap-1.5">
-        {!follow && (
+        {/* Player controls: pinned top-right INSIDE the fullscreen container so
+            they stay visible in fullscreen. z-40 keeps them above the iframe. */}
+        <div className="absolute right-2 bottom-2 z-40 flex items-center gap-1">
+          {!follow && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setPanel(true); }}
+              title="Playback settings"
+              className={`grid h-8 w-8 place-items-center rounded-lg border backdrop-blur-md transition-colors ${panel ? 'border-primary/45 bg-primary/25 text-white' : 'border-white/15 bg-black/60 text-white/80 hover:text-white'}`}
+            >
+              <Sliders className="h-3.5 w-3.5" />
+            </button>
+          )}
           <button
-            onClick={() => setPanel(true)}
-            title="Playback settings"
-            className={`grid h-9 w-9 place-items-center rounded-xl border transition-colors ${panel ? 'border-primary/55 bg-primary/20 text-white' : 'border-white/12 bg-white/[0.04] text-textSub hover:border-white/25 hover:text-white'}`}
+            onClick={(e) => { e.stopPropagation(); setTheater((v) => !v); }}
+            title={theater ? 'Exit Theater mode (T)' : 'Theater mode (T)'}
+            className={`grid h-8 w-8 place-items-center rounded-lg border backdrop-blur-md transition-colors ${theater ? 'border-primary/45 bg-primary/25 text-white' : 'border-white/15 bg-black/60 text-white/80 hover:text-white'}`}
           >
-            <Sliders className="h-4 w-4" />
+            {theater ? <Minimize className="h-3.5 w-3.5" /> : <Expand className="h-3.5 w-3.5" />}
           </button>
-        )}
-        <button
-          onClick={() => setTheater((v) => !v)}
-          title={theater ? 'Exit Theater mode (T)' : 'Theater mode (T)'}
-          className={`grid h-9 w-9 place-items-center rounded-xl border transition-colors ${theater ? 'border-primary/55 bg-primary/20 text-white' : 'border-white/12 bg-white/[0.04] text-textSub hover:border-white/25 hover:text-white'}`}
-        >
-          {theater ? <Minimize className="h-4 w-4" /> : <Expand className="h-4 w-4" />}
-        </button>
-        <button
-          onClick={toggleFullscreen}
-          title={fullscreen ? 'Exit Fullscreen (F)' : 'Fullscreen (F)'}
-          className={`grid h-9 w-9 place-items-center rounded-xl border transition-colors ${fullscreen ? 'border-primary/55 bg-primary/20 text-white' : 'border-white/12 bg-white/[0.04] text-textSub hover:border-white/25 hover:text-white'}`}
-        >
-          {fullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-        </button>
-      </div>
+          <button
+            onClick={(e) => { e.stopPropagation(); toggleFullscreen(); }}
+            title={fullscreen ? 'Exit Fullscreen (F)' : 'Fullscreen (F)'}
+            className={`grid h-8 w-8 place-items-center rounded-lg border backdrop-blur-md transition-colors ${fullscreen ? 'border-primary/45 bg-primary/25 text-white' : 'border-white/15 bg-black/60 text-white/80 hover:text-white'}`}
+          >
+            {fullscreen ? <Minimize className="h-3.5 w-3.5" /> : <Maximize className="h-3.5 w-3.5" />}
+          </button>
+        </div>
+      </motion.div>
 
       <p className="mt-2 flex items-center gap-1.5 px-1 text-[11px] text-textMuted">
         <Loader className="h-3 w-3" />
