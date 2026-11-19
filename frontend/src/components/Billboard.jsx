@@ -3,10 +3,10 @@ import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import { useNavigate } from 'react-router-dom';
 import { Check, Info, Play, Plus, Volume2, VolumeX } from 'lucide-react';
 import { tmdb } from '../lib/api';
-import { ageRating, backdrop, mediaTypeOf, ratingOf, runtimeLabel, titleOf, yearOf } from '../lib/config';
+import { ageRating, backdrop, mediaTypeOf, printQualityOf, ratingOf, runtimeLabel, titleOf, yearOf } from '../lib/config';
 import { usePrefs } from '../context/Prefs';
 import { ambient, letter, spring, splitLetters, iconOrbit } from '../lib/motion';
-import { Badge, RatingRing, toast } from './ui';
+import { Badge, QualityBadge, RatingRing, toast } from './ui';
 
 const ROTATE_MS = 13000;
 
@@ -172,6 +172,7 @@ export default function Billboard({ seeds, onOpen }) {
                 <span className="h-1.5 w-1.5 animate-pulse-glow rounded-full bg-white" />
                 {type === 'tv' ? 'Trending Series' : 'Featured Film'}
               </span>
+              <QualityBadge quality={printQualityOf(detail || current)} />
               {age && <Badge tone="gold">{age}</Badge>}
               {rating && (
                 <span className="flex items-center gap-1 text-[11px] font-bold tabular text-gold">

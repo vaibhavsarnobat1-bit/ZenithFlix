@@ -180,3 +180,29 @@ export const streamDateLabel = (details) => {
     return null;
   }
 };
+
+/**
+ * Determine whether a title is a theatre CAM print or official HD (1080p/Web-DL).
+ * Series are always streamed digitally (HD).
+ * Movies released within the last 65 days or upcoming in cinema are in theatre CAM window.
+ */
+export const printQualityOf = (t) => {
+  if (!t) return 'HD';
+  const type = mediaTypeOf(t);
+  if (type === 'tv') return 'HD';
+
+  const rel = t.release_date || t.first_air_date;
+  if (!rel) return 'HD';
+
+  const relTime = new Date(rel).getTime();
+  if (isNaN(relTime)) return 'HD';
+
+  const now = Date.now();
+  const diffDays = (now - relTime) / (1000 * 60 * 60 * 24);
+
+  // If in future or released within last 65 days, it is a theatre CAM print
+  if (diffDays < 65) {
+    return 'CAM';
+  }
+  return 'HD';
+};

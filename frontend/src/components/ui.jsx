@@ -24,6 +24,23 @@ export function Badge({ children, tone = 'muted', className = '', title }) {
   );
 }
 
+export function QualityBadge({ quality, className = '' }) {
+  if (!quality) return null;
+  const isCam = quality === 'CAM';
+  return (
+    <span
+      className={`inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider shadow-sm transition-transform ${
+        isCam
+          ? 'bg-amber-500 text-black border border-amber-400 font-black'
+          : 'border border-sky-400/50 bg-sky-500/25 text-sky-300 font-bold backdrop-blur-sm'
+      } ${className}`}
+      title={isCam ? 'Cinema / Theatre CAM Print' : 'High Definition (HD / 1080p Web-DL)'}
+    >
+      {quality}
+    </span>
+  );
+}
+
 export function RatingRing({ value, size = 40 }) {
   const v = typeof value === 'number' ? value : Number(value) || 0;
   const pct = Math.min(100, Math.max(0, (v / 10) * 100));

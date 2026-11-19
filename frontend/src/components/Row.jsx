@@ -2,10 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Check, Info, Play, Plus, Tv, Zap } from 'lucide-react';
-import { mediaTypeOf, poster, ratingOf, titleOf, yearOf } from '../lib/config';
+import { mediaTypeOf, poster, ratingOf, titleOf, yearOf, printQualityOf } from '../lib/config';
 import { usePrefs } from '../context/Prefs';
 import { spring, stagger, item, tiltCard, layerUp, iconOrbit } from '../lib/motion';
-import { Badge, SmartImage, toast } from './ui';
+import { Badge, QualityBadge, SmartImage, toast } from './ui';
 
 /* ─────────────────────────────────────────────────────────────
    TitleCard — poster tile with an in-bounds hover reveal.
@@ -21,6 +21,7 @@ export function TitleCard({ title, index = 0, variant = 'poster', progress, onOp
   const label = titleOf(title);
   const year = yearOf(title);
   const rating = ratingOf(title.vote_average);
+  const quality = printQualityOf(title);
   const imgPath = variant === 'landscape' ? title.backdrop_path || title.poster_path : title.poster_path;
   const src = poster(imgPath, variant === 'landscape' ? 'still' : 'poster');
   const sharedId = `${layoutIdPrefix}-${type}-${title.id}`;
@@ -75,6 +76,7 @@ export function TitleCard({ title, index = 0, variant = 'poster', progress, onOp
 
         {/* top-left badges */}
         <div className="absolute left-1.5 top-1.5 flex flex-col items-start gap-1">
+          <QualityBadge quality={quality} />
           {type === 'tv' && (
             <Badge tone="violet" className="!text-[9px]">
               <Tv className="h-2.5 w-2.5" /> Series

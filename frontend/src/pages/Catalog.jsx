@@ -4,10 +4,10 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Bookmark, Grid2x2, Rows3, SlidersHorizontal, Sparkles } from 'lucide-react';
 import DetailSheet from '../components/DetailSheet';
 import { tmdb } from '../lib/api';
-import { LANGUAGES, mediaTypeOf, titleOf, yearOf } from '../lib/config';
+import { LANGUAGES, mediaTypeOf, printQualityOf, titleOf, yearOf } from '../lib/config';
 import { usePrefs } from '../context/Prefs';
 import { item, spring, stagger } from '../lib/motion';
-import { Badge, EmptyState, SmartImage } from '../components/ui';
+import { Badge, EmptyState, QualityBadge, SmartImage } from '../components/ui';
 import { poster } from '../lib/config';
 
 const SORTS = [
@@ -21,6 +21,7 @@ const SORTS = [
 function Tile({ t, index, onOpen }) {
   const type = mediaTypeOf(t);
   const label = titleOf(t);
+  const quality = printQualityOf(t);
   return (
     <motion.button
       layout
@@ -38,6 +39,14 @@ function Tile({ t, index, onOpen }) {
         <div className="pointer-events-none absolute bottom-2 left-2 right-2 translate-y-2 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
           <p className="line-clamp-2 text-[11.5px] font-bold leading-snug text-white">{label}</p>
           <p className="mt-0.5 text-[10px] tabular text-textSub">{yearOf(t)}</p>
+        </div>
+        <div className="absolute left-1.5 top-1.5 flex flex-col items-start gap-1">
+          <QualityBadge quality={quality} />
+          {type === 'tv' && (
+            <Badge tone="violet" className="!text-[9px]">
+              Series
+            </Badge>
+          )}
         </div>
         {t.vote_average ? (
           <span className="absolute right-1.5 top-1.5 rounded-md border border-white/10 bg-black/65 px-1.5 py-0.5 tabular text-[10px] font-bold text-gold backdrop-blur-sm">
@@ -310,6 +319,7 @@ export default function Catalog({ mode = 'discover' }) {
                   <div className="flex items-baseline gap-2">
                     <p className="truncate text-[14px] font-bold text-white">{titleOf(t)}</p>
                     <span className="tabular text-[11px] text-textMuted">{yearOf(t)}</span>
+                    <QualityBadge quality={printQualityOf(t)} />
                     <Badge tone="violet">{mediaTypeOf(t)}</Badge>
                   </div>
                   <p className="mt-1 line-clamp-2 text-[12px] leading-relaxed text-textSub">{t.overview}</p>

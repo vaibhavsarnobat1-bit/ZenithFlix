@@ -7,13 +7,13 @@ import Player from '../components/Player';
 import Row from '../components/Row';
 import { TogetherBar, TogetherPanel } from '../components/Together';
 import { tmdb } from '../lib/api';
-import { IMG, PARTY_ORIGIN, ageRating, poster, ratingOf, runtimeLabel, saveProgress, titleOf, yearOf } from '../lib/config';
+import { IMG, PARTY_ORIGIN, ageRating, poster, printQualityOf, ratingOf, runtimeLabel, saveProgress, titleOf, yearOf } from '../lib/config';
 import { DEFAULT_SERVER, findProvider, loadProviders } from '../lib/providers';
 import { createParty } from '../lib/party';
 import { getUserName } from '../lib/config';
 import { usePrefs } from '../context/Prefs';
 import { item, spring, stagger } from '../lib/motion';
-import { Badge, EmptyState, RatingRing, SmartImage, toast } from '../components/ui';
+import { Badge, EmptyState, QualityBadge, RatingRing, SmartImage, toast } from '../components/ui';
 import { forgetSession, INVITE_PARAM, newRoomCode, readTogether, rememberSession, savedSession, START_PARAM, TOGETHER_PARAM, togetherLink } from '../lib/together';
 
 export default function Watch() {
@@ -369,6 +369,11 @@ export default function Watch() {
           {/* meta grid */}
           <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
             <div className="min-w-0">
+              <div className="mb-3 flex items-center gap-2">
+                <QualityBadge quality={printQualityOf(details)} />
+                {details.status && <Badge tone="muted">{details.status}</Badge>}
+                {yearOf(details) && <span className="text-[12px] tabular text-textMuted">{yearOf(details)}</span>}
+              </div>
               <p className="text-[14.5px] leading-relaxed text-textMain">{(details.overview || '').trim() || 'No synopsis available yet.'}</p>
 
               <div className="mt-4 flex flex-wrap gap-2 text-[11.5px] text-textMuted">
@@ -464,9 +469,12 @@ export default function Watch() {
             {/* side rail */}
             <aside className="min-w-0 space-y-4 lg:sticky lg:top-24 lg:self-start">
               <div className="flex items-center gap-3 overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.025] p-2.5 sm:block sm:p-0">
-                <motion.div layoutId={`poster-${type}-${id}`} className="aspect-[2/3] w-[92px] flex-shrink-0 overflow-hidden rounded-xl sm:w-full sm:rounded-none">
+                <div className="relative aspect-[2/3] w-[92px] flex-shrink-0 overflow-hidden rounded-xl sm:w-full sm:rounded-none">
                   <SmartImage src={poster(details.poster_path, 'poster2x')} alt={label} className="h-full w-full" fallbackLabel={label} />
-                </motion.div>
+                  <div className="absolute left-1.5 top-1.5">
+                    <QualityBadge quality={printQualityOf(details)} />
+                  </div>
+                </div>
                 <div className="flex items-center gap-3 p-0.5 sm:p-3">
                   <RatingRing value={Number(details.vote_average || 0)} size={42} />
                   <div className="text-[11px] leading-snug text-textMuted">

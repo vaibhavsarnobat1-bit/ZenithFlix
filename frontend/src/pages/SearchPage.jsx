@@ -4,10 +4,10 @@ import { useSearchParams } from 'react-router-dom';
 import { Search, Sparkles, X } from 'lucide-react';
 import DetailSheet from '../components/DetailSheet';
 import { tmdb } from '../lib/api';
-import { mediaTypeOf, poster, titleOf, yearOf } from '../lib/config';
+import { mediaTypeOf, poster, printQualityOf, titleOf, yearOf } from '../lib/config';
 import { usePrefs } from '../context/Prefs';
 import { item, item3d, spring, stagger } from '../lib/motion';
-import { Badge, EmptyState, SmartImage } from '../components/ui';
+import { Badge, EmptyState, QualityBadge, SmartImage } from '../components/ui';
 
 const FILTERS = [
   { id: 'all', label: 'Everything' },
@@ -172,9 +172,12 @@ export default function SearchPage() {
                     onClick={() => setSheet({ ...t, _sharedId: `s-${t.media_type}-${t.id}` })}
                     className="group overflow-hidden rounded-2xl border border-white/[0.06] bg-surface text-left hover:border-primary/45 hover:shadow-lift"
                   >
-                    <motion.div layoutId={`s-${t.media_type}-${t.id}`} className="aspect-[2/3]">
+                    <div className="relative aspect-[2/3]">
                       <SmartImage src={poster(t.poster_path, 'poster2x')} alt={titleOf(t)} className="h-full w-full" fallbackLabel={titleOf(t)} loading={i > 10 ? 'lazy' : 'eager'} />
-                    </motion.div>
+                      <div className="absolute left-1.5 top-1.5 flex flex-col items-start gap-1">
+                        <QualityBadge quality={printQualityOf(t)} />
+                      </div>
+                    </div>
                     <div className="p-2">
                       <p className="truncate text-[12px] font-semibold text-textMain">{titleOf(t)}</p>
                       <div className="mt-1 flex items-center gap-1.5">

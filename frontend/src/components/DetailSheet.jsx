@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Check, ChevronDown, Play, Plus, Share2, Users, Wand2 } from 'lucide-react';
 import { tmdb } from '../lib/api';
-import { IMG, PARTY_ORIGIN, ageRating, mediaTypeOf, poster, ratingOf, runtimeLabel, streamDateLabel, titleOf, yearOf } from '../lib/config';
+import { IMG, PARTY_ORIGIN, ageRating, mediaTypeOf, poster, printQualityOf, ratingOf, runtimeLabel, streamDateLabel, titleOf, yearOf } from '../lib/config';
 import { DEFAULT_SERVER } from '../lib/providers';
 import { createParty } from '../lib/party';
 import { getUserName } from '../lib/config';
@@ -11,7 +11,7 @@ import { newRoomCode, INVITE_PARAM, rememberSession, savedSession, START_PARAM, 
 import { copyText } from '../lib/invite';
 import { usePrefs } from '../context/Prefs';
 import { scrim, spring, stagger, item, sheet3d } from '../lib/motion';
-import { Badge, CloseButton, RatingRing, SmartImage, SegmentedTabs, toast } from './ui';
+import { Badge, CloseButton, QualityBadge, RatingRing, SmartImage, SegmentedTabs, toast } from './ui';
 
 /* ── cast strip ────────────────────────────────────────────── */
 function Cast({ cast = [] }) {
@@ -316,7 +316,7 @@ export default function DetailSheet({ item, onClose }) {
                 <span className="tabular font-semibold text-textSub">{yearOf(data || item)}</span>
                 {data?.runtime ? <span className="tabular text-textMuted">{runtimeLabel(data.runtime)}</span> : type === 'tv' && data?.episode_run_time?.[0] ? <span className="tabular text-textMuted">{data.episode_run_time[0]}m / ep</span> : null}
                 {age && <Badge tone="gold">{age}</Badge>}
-                <Badge tone="muted">Quality unverified</Badge>
+                <QualityBadge quality={printQualityOf(data || item)} />
                 {data?.original_language && <Badge tone="violet">{data.original_language.toUpperCase()}</Badge>}
                 {stream && <span className="text-textMuted">Streaming {stream}</span>}
               </div>
