@@ -63,10 +63,25 @@ function Aurora() {
   );
 }
 
+/**
+ * Query keys that describe a moment rather than a page. A watch-together
+ * countdown ticks by rewriting `start`, and refreshing it must never tear down
+ * the player the two viewers are already watching — so these stay out of the
+ * route key that decides when a page remounts.
+ */
+const TRANSIENT_PARAMS = ['together', 'start', 'at', 'invite'];
+
+function stableSearch(search) {
+  const q = new URLSearchParams(search);
+  TRANSIENT_PARAMS.forEach((key) => q.delete(key));
+  const out = q.toString();
+  return out ? `?${out}` : '';
+}
+
 function Shell() {
   const location = useLocation();
   const inTheatre = location.pathname.startsWith('/room');
-  const routeKey = inTheatre ? location.pathname : location.pathname + location.search;
+  const routeKey = inTheatre ? location.pathname : location.pathname + stableSearch(location.search);
 
   /*
    * An SPA keeps the previous page's scroll offset when a route swaps in, so

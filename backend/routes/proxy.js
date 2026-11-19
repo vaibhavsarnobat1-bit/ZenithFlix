@@ -1,6 +1,5 @@
 const express = require('express');
 const axios = require('axios');
-const cheerio = require('cheerio');
 const tmdb = require('../lib/tmdb');
 const {
   byId,
@@ -9,6 +8,12 @@ const {
   PROVIDERS,
   FALLBACK_ORDER,
 } = require('../lib/providers');
+
+/* cheerio is ~1MB of parser that only the HTML-sanitising route needs.
+   Loading it lazily keeps the serverless cold start (first tap on mobile)
+   to express + axios instead of the whole toolkit. */
+let cheerioRef;
+const cheerio = () => (cheerioRef ||= require('cheerio'));
 
 const router = express.Router();
 
@@ -290,7 +295,7 @@ router.get('/health', async (req, res) => {
    ────────────────────────────────────────────────────────────── */
 router.get('/stream', async (req, res) => {
   const { tmdbId, type = 'movie', season = 1, episode = 1 } = req.query;
-  const providerId = req.query.provider || 'vidlink-clean';
+  const providerId = req.query.provider || 'vidlink';
 
   if (!tmdbId) return res.status(400).send('Missing tmdbId');
 
@@ -523,7 +528,7 @@ function proxyBaseFor(req) {
 }
 
 function sanitize(html, targetUrl, origin, proxyBase) {
-  const $ = cheerio.load(html);
+  const $ = cheerio().load(html);
 
   // 1 · external scripts from ad networks
   $('script[src]').each((_, el) => {

@@ -45,13 +45,12 @@ export default function PlaybackPanel({
   quality, onQuality, subsOnly, onSubsOnly, blockPopups, onBlockPopups, dubs, title = '',
   onSelectAudioTrack, onSelectLevel,
 }) {
-  const embeds = useMemo(() => providers.filter((p) => p.kind === 'embed' || p.kind === 'proxy' || p.kind === 'hls'), [providers]);
+  const embeds = useMemo(() => providers.filter((p) => p.kind === 'embed' || p.kind === 'hls'), [providers]);
   const preference = SERVER_PREFERENCES.find((p) => p.id === quality);
   const answered = embeds.filter((p) => health?.servers?.[p.id]?.ok === true).length;
   const unknown = embeds.filter((p) => !health?.servers?.[p.id]).length;
   const metadata = dubs?.kind === 'title-language-metadata' ? dubs : null;
   const cageNote = (p) => {
-    if (p.kind === 'proxy') return 'AdShield sanitizer · ';
     if (!blockPopups) return 'Pop-ups allowed · ';
     return p.sandboxOk ? 'Sandbox enabled when compatible · ' : 'No sandbox compatibility · ';
   };
@@ -179,10 +178,10 @@ export default function PlaybackPanel({
                   className={`rounded-xl border px-2 py-2 text-[11px] font-bold ${quality === p.id ? 'border-primary/55 bg-primary/[0.14] text-white' : 'border-white/[0.08] text-textSub hover:border-white/25'}`}>{p.label}</button>)}
               </div>
             </Section>
-            <Section icon={Shield} label="Ad guard" note="A sandbox without pop-up permission blocks new tabs, but some hosts refuse to play inside it. Compatibility is provider-specific, not guaranteed. A frame that does not load may be retried without the sandbox; the player badge shows the actual guard state.">
+            <Section icon={Shield} label="Ad guard" note="A sandbox without pop-up permission blocks new tabs and click-unders, at browser level. Compatibility is host-specific, not guaranteed: some servers detect the cage and refuse to play, so their frame ships uncaged. The badge over the player shows the guard state for the server in use.">
               <Row selected={blockPopups} onSelect={() => onBlockPopups(true)} title="Prefer blocking ad tabs" sub="Sandbox compatible hosts; other hosts may still open tabs" />
               <Row selected={!blockPopups} onSelect={() => onBlockPopups(false)} title="Allow pop-ups from the player" sub="Only if needed; browser ad protection is separate" />
-              <p className="px-1 text-[10.5px] leading-relaxed text-textMuted"><TriangleAlert className="mr-1 inline h-3 w-3" />AdShield removes recognized scripts but does not guarantee playback or complete ad blocking.</p>
+              <p className="px-1 text-[10.5px] leading-relaxed text-textMuted"><TriangleAlert className="mr-1 inline h-3 w-3" />Servers marked with a warning detect the cage and run without it. If one stalls, the player offers &quot;Uncage &amp; retry&quot;.</p>
             </Section>
             <Section icon={Subtitles} label="Subtitles" note="Subtitle support below is advertised by the host, not confirmed for this title. Selection and rendering happen inside its player.">
               <Row selected={!subsOnly} onSelect={() => onSubsOnly(false)} title="Any server" sub="Do not filter by advertised subtitle support" />

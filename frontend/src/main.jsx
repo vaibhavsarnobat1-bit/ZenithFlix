@@ -2,6 +2,11 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
+import { warmBackend } from './lib/api'
+
+// Hosted installs run the API as a cold-starting serverless function; localhost
+// Express boots instantly and does not need the extra request.
+if (!['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname)) warmBackend()
 
 // Chrome restores the previous scroll offset once the (lazy, still-rendering)
 // page gets tall, which can drop the viewer halfway down the player page.

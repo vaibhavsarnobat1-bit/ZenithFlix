@@ -10,11 +10,11 @@ const source = fs.readFileSync(sourcePath, 'utf8');
 // before JSX with a minimal hook store; NOT a React DOM or video playback test.
 const helpersStart = source.indexOf('const clock =');
 const helpersEnd = source.indexOf('function Avatar(');
-const componentStart = source.indexOf('export default function TheatreRoom() {');
+const componentStart = source.indexOf('function TheatreRoomInner() {');
 const jsxStart = source.indexOf('  return (\n    <div className="flex h-[100dvh]');
 assert.ok(helpersStart >= 0 && helpersEnd > helpersStart && componentStart > helpersEnd && jsxStart > componentStart);
 const executable = source.slice(helpersStart, helpersEnd) + '\n' + source.slice(componentStart, jsxStart)
-  .replace('export default function TheatreRoom()', 'function TheatreRoom()') + '\nreturn { applySnapshot, applyTitle, applySource, onPlaybackStatus, leave, joinedRef, roomRef, sync, hostSyncTargetRef };\n}\nTheatreRoom;';
+  .replace('function TheatreRoomInner()', 'function TheatreRoom()') + '\nreturn { applySnapshot, applyTitle, applySource, onPlaybackStatus, leave, joinedRef, roomRef, sync, hostSyncTargetRef };\n}\nTheatreRoom;';
 
 async function harness() {
   const { matchesYouTubeSync } = await import(pathToFileURL(path.resolve(__dirname, '../../frontend/src/lib/youtube.js')).href);
@@ -43,7 +43,7 @@ async function harness() {
     useParams: () => ({ roomId: 'c'.repeat(32) }), useNavigate: () => () => {},
     localStorage: { getItem: () => null },
     window: { innerWidth: 800, location: { origin: 'http://localhost:5175' }, addEventListener() {}, removeEventListener() {} },
-    io: () => socket, API_ORIGIN: 'http://localhost:5001', PUBLIC_WEB_ORIGIN: '', DEFAULT_SERVER: 'vidlink',
+    io: () => socket, API_ORIGIN: 'http://localhost:5001', SOCKET_ORIGIN: 'http://localhost:5001', PUBLIC_WEB_ORIGIN: '', DEFAULT_SERVER: 'vidlink',
     partyInvite: () => ({ url: '', isPublic: false }), validRoomId: () => true,
     roomCredentials: () => ({ ...creds }), saveRoomCredentials: (id, value) => saved.push(value),
     partyRequest: async () => { if (config.rejectLeave) throw new Error('Disconnected'); return { ok: true }; },

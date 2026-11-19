@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, Check, Expand, Gauge, Loader, Maximize, Minimize, RefreshCw, Server, Shield, SkipForward, Sliders, Users, Volume2, Wand2 } from 'lucide-react';
+import { AlertTriangle, Check, Expand, Gauge, Languages, Loader, Maximize, Minimize, RefreshCw, Server, Shield, ShieldOff, SkipForward, Sliders, Users, Volume2 } from 'lucide-react';
 import { buildSource, loadDubs, loadProviders, loadHealth, providersSync, findProvider, DEFAULT_SERVER } from '../lib/providers';
 import { iframeAudioState, iframeQualityState } from '../lib/audio';
 import { DirectHlsPlayer } from '../lib/hlsPlayer';
@@ -36,6 +36,27 @@ const QUALITY_SHORT = { '1080': 'Prefer HD servers', '4k': 'Prefer 4K servers' }
 /** Default preference for advertised HD servers; never a stream-quality claim. */
 const DEFAULT_QUALITY = '1080';
 
+/** Dub shortcuts map to embed hosts that request the language via URL param. */
+const DUB_SERVER = {
+  hi: ['autoembed-hindi', 'autoembed-multi', 'zxc-hindi', 'embed-su-hindi', 'moviebox-hindi'],
+  ta: ['autoembed-tamil', 'autoembed-multi', 'zxc-tamil'],
+  te: ['autoembed-telugu', 'autoembed-multi', 'zxc-telugu'],
+  ml: ['autoembed-multi'],
+  kn: ['autoembed-multi'],
+};
+const DUB_LANGS = [
+  { code: 'original', label: 'Original' },
+  { code: 'hi', label: 'Hindi (हिन्दी)' },
+  { code: 'ta', label: 'Tamil (தமிழ்)' },
+  { code: 'te', label: 'Telugu (తెలుగు)' },
+  { code: 'ml', label: 'Malayalam (മലയാളം)' },
+  { code: 'kn', label: 'Kannada (ಕನ್ನಡ)' },
+];
+const SERVER_DUB = {};
+for (const [lang, ids] of Object.entries(DUB_SERVER)) {
+  for (const id of ids) SERVER_DUB[id] = lang;
+}
+
 /**
  * What a caged frame is still allowed to do.
  *
@@ -48,7 +69,7 @@ const DEFAULT_QUALITY = '1080';
  * why only servers flagged `sandboxOk` (no sandbox sniffing in their own page)
  * ever get framed like this.
  */
-const CAGE = 'allow-scripts allow-same-origin allow-forms allow-modals allow-pointer-lock allow-orientation-lock allow-popups allow-popups-to-escape-sandbox';
+const CAGE = 'allow-scripts allow-same-origin allow-forms allow-modals allow-pointer-lock allow-orientation-lock';
 
 /**
  * The watch player.
@@ -75,20 +96,8 @@ export default function Player({
   sync = null,
   onPlaybackStatus,
 }) {
-  /**
-   * The last server a viewer used is where the next title starts — with one
-   * exception. An "+ AdShield" twin is an experiment for *this* stream, not a
-   * permanent setting: several hosts lock their player to their own referrer and
-   * answer 404 once we rewrite the document, so restoring a twin as the default
-   * quietly strands every future title on a black rectangle. Letting the health
-   * probe pick instead means the next opening lands on a direct embed again, and
-   * the twin stays one tap away.
-   */
-  const preferredServer = () => {
-    const saved = getPreferredServer();
-    if (!saved) return null;
-    return findProvider(saved)?.kind === 'proxy' ? null : saved;
-  };
+  /** The last server a viewer used is where the next title starts. */
+  const preferredServer = () => getPreferredServer();
   const [localServer, setServer] = useState(provider || preferredServer() || DEFAULT_SERVER);
   // Party source changes render only after an authoritative server snapshot.
   const server = party && provider ? provider : localServer;
@@ -144,10 +153,16 @@ export default function Player({
       if (dead) return;
       setHealth(h);
       // Nobody chose explicitly → start on a server the backend says is alive,
-      // instead of burning 13s on a dead host every single time. Direct embeds
-      // win over AdShield twins for the same reason the watchdog does.
+      // instead of burning 13s on a dead host every single time.
       if (!autoPicked.current && h?.working?.length) {
-        const rank = (id) => (findProvider(id)?.kind === 'embed' ? 0 : 1);
+        // Cageable first: an embed that detects the sandbox sulks, and the
+        // watchdog would spend its whole startup budget discovering that.
+        const rank = (id) => {
+          const p = findProvider(id);
+          if (!p) return 9;
+          if (p.kind !== 'embed') return 2;
+          return blockPopups && p.sandboxOk === false ? 1 : 0;
+        };
         const usable = [...h.working]
           .sort((a, b) => rank(a) - rank(b))
           .find((id) => buildSource(id, { tmdbId, type, season, episode, youtubeKey }).ok);
@@ -186,7 +201,8 @@ export default function Player({
    */
   useEffect(() => {
     if (!providers.length || providers.some((p) => p.id === server)) return;
-    const first = providers.find((p) => p.kind === 'embed') || providers.find((p) => p.kind === 'proxy');
+    const cageable = (p) => p.kind === 'embed' && (!blockPopups || p.sandboxOk !== false);
+    const first = providers.find(cageable) || providers.find((p) => p.kind === 'embed');
     if (!first) return;
     autoPicked.current = false;
     setServer(first.id);
@@ -206,8 +222,11 @@ export default function Player({
    * it. `cageOff` is the one-shot escape described at the watchdog.
    */
   const [cageOff, setCageOff] = useState(false);
-  const cageActive = findProvider(server);
-  const cage = blockPopups && source.kind === 'embed' && !cageOff;
+  // Only servers that do not detect the sandbox get framed like this; a host
+  // that sulks inside one costs the whole startup budget before the watchdog
+  // notices, which reads to the viewer as "the servers are slow".
+  const sniffsCage = findProvider(server)?.sandboxOk === false;
+  const cage = blockPopups && !sniffsCage && source.kind === 'embed' && !cageOff;
 
   /**
    * Anchor the scroll guard on the whole player block — not just the frame — so
@@ -218,7 +237,7 @@ export default function Player({
    * for embeds and sanitized proxies.
    */
   const playerEl = useCallback(() => rootRef.current, []);
-  useForeignScrollGuard(source.kind === 'embed' || source.kind === 'proxy', playerEl);
+  useForeignScrollGuard(source.kind === 'embed', playerEl);
 
   /**
    * Shared fallback order for manual switches and the watchdog. Health measures
@@ -229,16 +248,13 @@ export default function Player({
   const serverRing = useCallback(
     (fromId) => {
       const dead = (id) => health?.servers?.[id]?.ok === false;
-      const playable = providers.filter((p) => p.kind === 'embed' || p.kind === 'proxy');
+      const playable = providers.filter((p) => p.kind === 'embed');
 
       // Registry language claims cannot filter the playback ring. No selected
       // source has an observed audio-track list.
       const subsPool = playable.filter((p) => !subsOnly || p.subs);
       const list = subsPool.length ? subsPool : playable;
-      const direct = list.filter((p) => p.kind === 'embed').map((p) => p.id);
-      const sanitized = list.map((p) => p.id).filter((id) => !direct.includes(id));
-      // Direct embeds win the chain; proxies only when nothing else is left.
-      const pool = direct.length ? direct : [...direct, ...sanitized];
+      const pool = list.map((p) => p.id);
       const want = quality === '4k' ? 3 : quality === '720' || quality === '1080' ? 2 : 0;
       const meets = (id) => (findProvider(id)?.tier || 1) >= want;
       /**
@@ -260,15 +276,11 @@ export default function Player({
        * A server we can cage (no sandbox sniffing in its page) cannot open an ad
        * tab at all, so with the guard on it is worth more than a host that plays
        * an ad-free-looking frame while firing three domains in the background.
-       * An AdShield twin counts as satisfied too — its document is ours and its
-       * `window.open` is already overridden. Same escape hatch as quality: if
-       * fewer than two servers survive, the guard stops filtering and only sorts,
-       * because "no server could start this title" is a worse outcome than an ad.
+       * Same escape hatch as quality: if fewer than two servers survive, the
+       * guard stops filtering and only sorts, because "no server could start this
+       * title" is a worse outcome than an ad.
        */
-      const cageOk = (id) => {
-        const p = findProvider(id);
-        return Boolean(p && (p.kind === 'proxy' || p.sandboxOk));
-      };
+      const cageOk = (id) => Boolean(findProvider(id)?.sandboxOk);
       const caged = blockPopups ? qualityRing.filter(cageOk) : qualityRing;
       const ring = caged.length >= 2 ? caged : qualityRing;
       const proven = (health?.working || []).filter((id) => ring.includes(id) && !dead(id));
@@ -320,7 +332,7 @@ export default function Player({
     if (follow || !providers.length) return;
     const cur = providers.find((p) => p.id === server);
     if (!cur || cur.kind === 'trailer') return;
-    const cageOk = (p) => Boolean(p && (p.kind === 'proxy' || p.sandboxOk));
+    const cageOk = (p) => Boolean(p?.sandboxOk);
     const brokeSubs = subsOnly && !cur.subs;
     const brokeCage = blockPopups && !cageOk(cur);
     if (!brokeSubs && !brokeCage) return;
@@ -422,6 +434,9 @@ export default function Player({
       }
       if (!nudged.current && silentBy.current && now > silentBy.current) {
         nudged.current = true;
+        // A cross-origin frame never reports playback, so this is only ever a
+        // prompt for the viewer — the cage stays. Dropping it here would undo
+        // the pop-up guard on every server, because silence is the normal state.
         setNudge(true);
       }
     }, 1000);
@@ -596,6 +611,18 @@ export default function Player({
     onProviderChange?.(id);
   };
 
+  /** Map a dubbing choice to its embed host (Hindi/Tamil/Telugu) or back to the default source. */
+  const selectDub = (code) => {
+    if (code === 'original') {
+      pick(findProvider(preferredServer()) ? preferredServer() : DEFAULT_SERVER);
+    } else {
+      const candidates = DUB_SERVER[code] || [];
+      const target = candidates.find((id) => findProvider(id)) || candidates[0];
+      if (target) pick(target);
+    }
+  };
+  const currentDub = SERVER_DUB[server] || 'original';
+
   /**
    * Reload the frame without changing server — the other escape hatch.
    *
@@ -609,10 +636,6 @@ export default function Player({
   const reloadFrame = useCallback(() => setFrameKey((k) => k + 1), []);
 
   const active = findProvider(server);
-  /** AdShield twin of the server in use, else the first sanitized entry we ship. */
-  const shieldTwin =
-    providers.find((p) => p.kind === 'proxy' && p.upstream === server) ||
-    providers.find((p) => p.kind === 'proxy');
   /** Live verdict for the server in use — drives the dot on the Playback trigger. */
   const currentVerdict = server === 'trailer' ? null : health?.servers?.[server];
   const currentDead = currentVerdict && currentVerdict.ok === false;
@@ -651,6 +674,12 @@ export default function Player({
             >
               <Sliders className="h-3.5 w-3.5 text-primary" />
               <span>Audio & Server Settings</span>
+              {/* Anything the slide changed beyond its defaults, shown where it
+                  matters: "Ads allowed" here is the viewer's warning that the
+                  pop-up guard is off. */}
+              {playbackChips.map((chip) => (
+                <span key={chip} className="rounded-md bg-white/12 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-textSub">{chip}</span>
+              ))}
               <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${currentDead ? 'bg-gold' : currentVerdict ? 'bg-lime' : 'bg-white/35'}`} />
             </motion.button>
           )}
@@ -665,31 +694,7 @@ export default function Player({
             </button>
           )}
 
-          {/* Built-in VPN / AdShield Toggle Button */}
-          <button
-            type="button"
-            onClick={() => {
-              if (active?.kind === 'proxy') {
-                if (active.upstream) pick(active.upstream);
-              } else if (shieldTwin) {
-                pick(shieldTwin.id);
-              } else {
-                pick('vidsrcpm-clean');
-              }
-            }}
-            title="Toggle Built-in AdBlock & Clean Proxy Server"
-            className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-[11.5px] font-bold transition-all ${
-              active?.kind === 'proxy'
-                ? 'border-lime bg-lime/20 text-lime shadow-sm'
-                : 'border-white/12 bg-white/[0.04] text-textSub hover:border-lime/50 hover:text-white'
-            }`}
-          >
-            <Shield className="h-3.5 w-3.5" />
-            <span>VPN & AdShield: {active?.kind === 'proxy' ? 'ON 🛡️' : 'OFF'}</span>
-          </button>
-
           <div className="ml-auto flex items-center gap-1.5">
-            {active?.kind === 'proxy' && <Badge tone="live" title="Ad scripts removed by our backend"><Shield className="h-2.5 w-2.5" /> Clean Proxy</Badge>}
             {active?.subs && <Badge tone="cyan">Subs</Badge>}
             <Badge tone="muted" title="Use in-player ⚙️ menu for stream audio / dubs">
               <Volume2 className="h-2.5 w-2.5" /> Audio in Player Menu
@@ -714,14 +719,19 @@ export default function Player({
               <Server className="h-3 w-3 text-primary" /> Servers:
             </span>
             {providers
-              .filter((p) => p.kind === 'embed' || p.kind === 'proxy' || p.id === 'hls-direct')
+              .filter((p) => p.kind === 'embed' || p.id === 'hls-direct')
               .map((p) => {
                 const isCurrent = p.id === server;
-                const isMultiAudio = p.id === 'hls-direct' || p.id === 'vidsrcpm' || p.id === 'smashy' || p.id === 'videasy';
+                const isMultiAudio = p.id === 'autoembed-multi' || p.id === 'hls-direct' || p.id === 'vidsrcpm' || p.id === 'smashy' || p.id === 'videasy';
+                // The cage state follows the provider that actually gets framed,
+                // resolved from the chip id rather than the chip itself.
+                const resolved = buildSource(p.id, { tmdbId, type, season, episode, youtubeKey }).provider;
+                const popsAds = blockPopups && resolved?.sandboxOk === false;
                 return (
                   <button
                     key={p.id}
                     onClick={() => pick(p.id)}
+                    title={popsAds ? `${p.blurb}\n\n⚠ This host detects the pop-up cage and refuses to play inside it, so its frame is uncaged — it can still open an ad tab.` : p.blurb}
                     className={`shrink-0 flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11.5px] font-semibold transition-all ${
                       isCurrent
                         ? 'border-primary bg-primary text-white shadow-sm'
@@ -729,6 +739,7 @@ export default function Player({
                     }`}
                   >
                     <span>{p.label.replace('Server ', 'S').replace(' · ', ': ')}</span>
+                    {popsAds && <AlertTriangle className="h-2.5 w-2.5 text-gold" />}
                     {isMultiAudio && (
                       <span className={`text-[9px] px-1 py-0.2 rounded font-bold uppercase tracking-wider ${isCurrent ? 'bg-black/30 text-lime' : 'bg-lime/15 text-lime'}`}>
                         Audio
@@ -737,6 +748,31 @@ export default function Player({
                   </button>
                 );
               })}
+          </div>
+        )}
+
+        {/* Dubbing shortcuts — one-tap language switch that selects the matching dub host */}
+        {!follow && (
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+            <span className="mr-1 flex shrink-0 items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-textMuted">
+              <Languages className="h-3 w-3 text-primary" /> Dubbing:
+            </span>
+            {DUB_LANGS.map((l) => (
+              <button
+                key={l.code}
+                type="button"
+                onClick={() => selectDub(l.code)}
+                aria-pressed={currentDub === l.code}
+                title={l.code === 'original' ? 'Original audio (default server)' : `Switch to ${l.label} dub stream`}
+                className={`shrink-0 rounded-lg border px-3 py-1 text-[11.5px] font-bold transition-all ${
+                  currentDub === l.code
+                    ? 'border-secondary/60 bg-secondary/20 text-white shadow-sm'
+                    : 'border-white/10 bg-white/[0.03] text-textSub hover:border-white/25 hover:text-white'
+                }`}
+              >
+                {l.label}
+              </button>
+            ))}
           </div>
         )}
       </div>
@@ -851,9 +887,6 @@ export default function Player({
                     <Check className="h-3.5 w-3.5" /> Play HD trailer instead
                   </button>
                 )}
-                <button onClick={() => shieldTwin && pick(shieldTwin.id)} className="flex items-center gap-1.5 rounded-xl border border-lime/40 bg-lime/10 px-4 py-2 text-[13px] font-bold text-lime">
-                  <Wand2 className="h-3.5 w-3.5" /> Use AdShield proxy
-                </button>
               </div>
             </motion.div>
           )}
@@ -871,6 +904,10 @@ export default function Player({
               ref={frameRef}
               key={`${server}-${tmdbId}-${type}-${season}-${episode}-${frameKey}-${cage ? 'caged' : 'open'}`}
               src={source.url}
+              // The pop-under cage itself: omitting `allow-popups` is what stops a
+              // third-party frame from opening an ad tab, at browser level. Without
+              // this attribute the badge below would be describing nothing.
+              sandbox={cage ? CAGE : undefined}
               title={title || 'ZenithFlix player'}
               onLoad={() => {
                 readyRef.current = true;
@@ -905,7 +942,7 @@ export default function Player({
               </Badge>
             )}
             {blockPopups && !cage && source.kind === 'embed' && (
-              <Badge tone="gold" title="This server detects sandboxing and would refuse to play, so its frame is uncaged — its pop-up tabs are Opera's job, or pick an + AdShield server">
+              <Badge tone="gold" title="This server detects sandboxing and would refuse to play, so its frame is uncaged — catch its pop-up tabs with a browser pop-up blocker, or pick a server without this warning">
                 <AlertTriangle className="h-2.5 w-2.5" /> Can&apos;t cage this server
               </Badge>
             )}
@@ -972,6 +1009,22 @@ export default function Player({
               >
                 <SkipForward className="h-3 w-3" /> {nudge ? 'Try another server' : 'Switch server'}
               </button>
+              {/* We cannot read the frame, so when a caged server goes quiet the
+                  only honest next step is to offer the one thing we can change
+                  from here: the cage itself. */}
+              {nudge && cage && (
+                <button
+                  onClick={() => {
+                    cageTried.current = true;
+                    setCageOff(true);
+                    setFrameKey((k) => k + 1);
+                  }}
+                  title="Some hosts refuse to play inside a sandboxed frame. Retry this server uncaged — it can open ad tabs again, so close any that appear."
+                  className="flex items-center gap-1.5 rounded-lg border border-gold/50 bg-gold/20 px-2.5 py-1.5 text-[11px] font-bold text-white backdrop-blur-md transition-colors hover:bg-gold/30"
+                >
+                  <ShieldOff className="h-3 w-3" /> Uncage &amp; retry
+                </button>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

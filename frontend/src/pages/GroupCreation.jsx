@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, ChevronRight, Film, Monitor, Play, Search, Users, Wand2 } from 'lucide-react';
+import { ArrowLeft, Check, ChevronRight, Film, Monitor, Play, Search, Users } from 'lucide-react';
 import { tmdb } from '../lib/api';
 import { DEFAULT_SERVER, embedServerIds, loadProviders } from '../lib/providers';
-import { getPreferredServer, mediaTypeOf, poster, setPreferredServer, titleOf, yearOf } from '../lib/config';
+import { getPreferredServer, mediaTypeOf, PARTY_ORIGIN, poster, setPreferredServer, titleOf, yearOf } from '../lib/config';
 import { item, rise, spring, stagger } from '../lib/motion';
 import { Badge, SmartImage, toast } from '../components/ui';
+import NeedsBackend from '../components/NeedsBackend';
 import { LogoMark } from '../components/Logo3D';
 import { createParty } from '../lib/party';
 import { getUserName } from '../lib/config';
@@ -146,7 +147,20 @@ function LibraryPicker({ picked, setPicked, season, setSeason, episode, setEpiso
 }
 
 /* ── main ─────────────────────────────────────────────────────── */
+
+/**
+ * Creating a live room means handing out an ID that other phones can connect
+ * to, which only works while a backend holds the socket open. Without one the
+ * form would be a promise the app cannot keep, so it is replaced by the
+ * explanation and the link flow that does work.
+ */
 export default function GroupCreation() {
+  return PARTY_ORIGIN
+    ? <GroupCreationInner />
+    : <NeedsBackend heading="Live rooms need an always-on backend" />;
+}
+
+function GroupCreationInner() {
   const navigate = useNavigate();
   const [tab, setTab] = useState('library');
   const [roomName, setRoomName] = useState('');
@@ -162,7 +176,7 @@ export default function GroupCreation() {
   const previewRef = useRef(null);
 
   useEffect(() => {
-    loadProviders().then((r) => setServers(r.providers.filter((p) => p.kind === 'embed' || p.kind === 'proxy')));
+    loadProviders().then((r) => setServers(r.providers.filter((p) => p.kind === 'embed')));
   }, []);
 
   useEffect(() => {
@@ -341,7 +355,6 @@ export default function GroupCreation() {
                           server === s.id ? 'border-primary/55 bg-primary/15 text-white' : 'border-white/10 text-textMuted hover:text-textSub'
                         }`}
                       >
-                        {s.kind === 'proxy' && <Wand2 className="h-3 w-3" />}
                         {s.label.replace(/^Server \d+ · /, '')}
                       </button>
                     ))}

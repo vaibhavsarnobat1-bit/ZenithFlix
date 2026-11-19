@@ -5,14 +5,16 @@ import { ArrowLeft, Check, ChevronRight, Clock, Heart, Link2, Play, Plus, SkipFo
 import DetailSheet from '../components/DetailSheet';
 import Player from '../components/Player';
 import Row from '../components/Row';
+import { TogetherBar, TogetherPanel } from '../components/Together';
 import { tmdb } from '../lib/api';
-import { IMG, ageRating, poster, ratingOf, runtimeLabel, saveProgress, titleOf, yearOf } from '../lib/config';
-import { DEFAULT_SERVER, loadProviders } from '../lib/providers';
+import { IMG, PARTY_ORIGIN, ageRating, poster, ratingOf, runtimeLabel, saveProgress, titleOf, yearOf } from '../lib/config';
+import { DEFAULT_SERVER, findProvider, loadProviders } from '../lib/providers';
 import { createParty } from '../lib/party';
 import { getUserName } from '../lib/config';
 import { usePrefs } from '../context/Prefs';
 import { item, spring, stagger } from '../lib/motion';
 import { Badge, EmptyState, RatingRing, SmartImage, toast } from '../components/ui';
+import { forgetSession, INVITE_PARAM, newRoomCode, readTogether, rememberSession, savedSession, START_PARAM, TOGETHER_PARAM, togetherLink } from '../lib/together';
 
 export default function Watch() {
   const { type = 'movie', id } = useParams();
@@ -32,6 +34,9 @@ export default function Watch() {
   const [server, setServer] = useState(provider);
   const [sheet, setSheet] = useState(null);
   const [creatingParty, setCreatingParty] = useState(false);
+  /* Arriving from a "watch together" button anywhere else in the app should
+     hand the viewer the link, not hide it behind another tap. */
+  const [togetherPanel, setTogetherPanel] = useState(() => Boolean(readTogether(params)?.invite));
 
   useEffect(() => {
     loadProviders();
@@ -103,6 +108,60 @@ export default function Watch() {
     if (eNext) return { season, episode: eNext.episode_number, name: eNext.name };
     return { season: season + 1, episode: 1, name: 'Next season' };
   }, [episodes, episode, season, type]);
+
+  /* ── watch together ─────────────────────────────────────────────
+     The session lives in the URL because the URL is the only thing
+     that travels to the friend's phone. Nothing here talks to a
+     server, so there is nothing to deploy and nothing to sign up for.
+  */
+  const session = useMemo(() => readTogether(params), [params]);
+  const serverInUse = server || provider || DEFAULT_SERVER;
+
+  /** Same code in this browser's memory means we are the one who sent it. */
+  const isHost = Boolean(session && savedSession(type, id)?.code === session.code);
+
+  const invitation = useMemo(
+    () =>
+      (session
+        ? togetherLink({
+            origin: window.location.origin,
+            type,
+            id,
+            season,
+            episode,
+            provider: serverInUse,
+            youtubeKey,
+            code: session.code,
+            startAt: session.startAt,
+            at: session.at,
+          })
+        : ''),
+    [session, type, id, season, episode, serverInUse, youtubeKey]
+  );
+
+  const startTogether = useCallback(
+    (leadSeconds, { keepCode } = {}) => {
+      const code = (keepCode && session?.code) || savedSession(type, id)?.code || newRoomCode();
+      const startAt = Date.now() + Math.max(5, leadSeconds) * 1000;
+      rememberSession({ type, id, season, episode, provider: serverInUse, code, startAt });
+      goto({ [TOGETHER_PARAM]: code, [START_PARAM]: Math.round(startAt), at: null, [INVITE_PARAM]: null });
+      setTogetherPanel(true);
+    },
+    [session, type, id, season, episode, serverInUse, goto]
+  );
+
+  const leaveTogether = () => {
+    forgetSession(type, id);
+    goto({ [TOGETHER_PARAM]: null, [START_PARAM]: null, at: null, [INVITE_PARAM]: null });
+    setTogetherPanel(false);
+    toast('Left the watch-together session');
+  };
+
+  /** The one-shot flag that opened this panel has no business staying in a link. */
+  const closeTogether = () => {
+    setTogetherPanel(false);
+    if (params.get(INVITE_PARAM)) goto({ [INVITE_PARAM]: null });
+  };
 
   const openParty = async () => {
     if (creatingParty) return;
@@ -226,14 +285,48 @@ export default function Watch() {
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 transition={spring.snappy}
-                onClick={openParty}
-                disabled={creatingParty}
-                className="hidden items-center gap-2 rounded-xl border border-secondary/45 bg-secondary/15 px-4 py-2 text-[12.5px] font-bold text-white hover:bg-secondary/25 sm:flex"
+                onClick={() => setTogetherPanel(true)}
+                className="flex items-center gap-2 rounded-xl border border-secondary/45 bg-secondary/15 px-4 py-2 text-[12.5px] font-bold text-white hover:bg-secondary/25"
               >
-                <Users className="h-3.5 w-3.5" /> {creatingParty ? 'Creating…' : 'Create Watch Party'}
+                <Users className="h-3.5 w-3.5" />
+                {/* Once a session exists the code replaces the label: it is the
+                    thing two people compare to know they are on the same link. */}
+                {session ? `Together · ${session.code}` : 'Watch together'}
               </motion.button>
+              {PARTY_ORIGIN && (
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={spring.snappy}
+                  onClick={openParty}
+                  disabled={creatingParty}
+                  title="Live room: pause and seek mirror between everyone, but it needs the always-on backend"
+                  className="hidden items-center gap-2 rounded-xl border border-white/12 bg-white/[0.04] px-4 py-2 text-[12.5px] font-bold text-textSub hover:text-white lg:flex"
+                >
+                  <Users className="h-3.5 w-3.5" /> {creatingParty ? 'Creating…' : 'Live room'}
+                </motion.button>
+              )}
             </motion.div>
           </motion.div>
+
+          {/* watch-together strip: the countdown stays visible while playing */}
+          <AnimatePresence>
+            {session && !session.stale && (
+              <div className="mb-3">
+                <TogetherBar
+                  session={session}
+                  isHost={isHost}
+                  label={label}
+                  type={type}
+                  season={season}
+                  episode={episode}
+                  onNewCountdown={() => startTogether(60, { keepCode: true })}
+                  onOpen={() => setTogetherPanel(true)}
+                  onLeave={leaveTogether}
+                />
+              </div>
+            )}
+          </AnimatePresence>
 
           {/* the player */}
           <motion.div initial={{ opacity: 0, y: 24, scale: 0.985 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ ...spring.soft, duration: 0.5 }}>
@@ -397,13 +490,18 @@ export default function Watch() {
               </div>
 
               <div className="rounded-2xl border border-primary/25 bg-primary/[0.07] p-4">
-                <div className="mb-1.5 font-display text-[13.5px] font-bold text-white">Watch with friends</div>
+                <div className="mb-1.5 font-display text-[13.5px] font-bold text-white">Watch with a friend</div>
                 <p className="text-[12px] leading-relaxed text-textSub">
-                  Creates a room with this title, server and episode. Copy the invitation inside the room. Opaque iframe playback supports cues only; remote friends need a public HTTPS deployment.
+                  Pick a start time, copy the link, send it. They open the same episode on the same server and both phones count down to zero together — no app, no account, no server of ours in the middle.
                 </p>
-                <button onClick={openParty} disabled={creatingParty} className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-white py-2.5 text-[12.5px] font-bold text-black hover:bg-primaryLight">
-                  <Users className="h-3.5 w-3.5" /> {creatingParty ? 'Creating…' : 'Create Watch Party'}
+                <button onClick={() => setTogetherPanel(true)} className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-white py-2.5 text-[12.5px] font-bold text-black hover:bg-primaryLight">
+                  <Users className="h-3.5 w-3.5" /> {session ? `Open session ${session.code}` : 'Make the link'}
                 </button>
+                {PARTY_ORIGIN && (
+                  <button onClick={openParty} disabled={creatingParty} className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-white/12 py-2 text-[11.5px] font-bold text-textSub hover:text-white">
+                    <Users className="h-3.5 w-3.5" /> {creatingParty ? 'Creating…' : 'Live room (mirrors pause and seek)'}
+                  </button>
+                )}
               </div>
 
               <button onClick={() => navigate(`/catalog/${type}`)} className="flex w-full items-center justify-between rounded-2xl border border-white/[0.07] bg-white/[0.025] px-4 py-3 text-[12.5px] font-bold text-textSub hover:border-primary/35 hover:text-white">
@@ -415,6 +513,20 @@ export default function Watch() {
       </div>
 
       <Row headline="More like this" name="similar" items={similar} onOpen={(t, sid) => setSheet({ ...t, _sharedId: sid })} />
+
+      <TogetherPanel
+        open={togetherPanel}
+        onClose={closeTogether}
+        label={label}
+        type={type}
+        season={season}
+        episode={episode}
+        serverLabel={findProvider(serverInUse)?.label || serverInUse}
+        session={session}
+        link={invitation}
+        onStart={startTogether}
+        onLeave={leaveTogether}
+      />
 
       <AnimatePresence>{sheet && <DetailSheet item={sheet} onClose={() => setSheet(null)} />}</AnimatePresence>
     </div>

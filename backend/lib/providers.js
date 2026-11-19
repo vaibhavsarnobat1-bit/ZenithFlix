@@ -5,7 +5,10 @@
  *                      embedding permission and rights depend on the uploader.
  * `kind: 'embed'`   → third-party iframe player, framed directly.
  * `kind: 'proxy'`   → same upstream, fetched by /api/proxy/stream and stripped
- *                      of ad scripts before it reaches the iframe.
+ *                      of ad scripts before it reaches the iframe. No registry
+ *                      entry ships as a proxy any more: the strip needs an
+ *                      always-on host, so the server bar is embeds only. The
+ *                      route stays for local experimentation.
  *
  * URLs live in `patterns` (string templates) so the browser can interpolate the
  * exact same shape the server uses — no duplicated templates, no drift.
@@ -52,25 +55,82 @@ const PROVIDERS = [
     },
   }),
 
+  P('autoembed-multi', '🔥 AutoEmbed · Multi-Audio (Nitro)', {
+    kind: 'embed',
+    blurb: 'AutoEmbed Multi-Language player with in-player Audio menu (Hindi, Tamil, Telugu, Malayalam, Kannada), Nitro server & 1080p quality selector.',
+    quality: '1080p',
+    tier: 1,
+    subs: true,
+    sandboxOk: false,
+    patterns: {
+      movie: 'https://nxsha.space/embed/movie/{tmdbId}',
+      tv: 'https://nxsha.space/embed/tv/{tmdbId}/{season}/{episode}',
+    },
+  }),
+
+  P('autoembed-hindi', '⚡ AutoEmbed · Hindi Dub (Official)', {
+    kind: 'embed',
+    blurb: 'AutoEmbed direct Hindi Dub server stream (?lang=hindi).',
+    quality: '1080p',
+    tier: 1,
+    subs: true,
+    sandboxOk: false,
+    patterns: {
+      movie: 'https://nxsha.space/embed/movie/{tmdbId}?lang=hindi&autoplay=true',
+      tv: 'https://nxsha.space/embed/tv/{tmdbId}/{season}/{episode}?lang=hindi&autoplay=true',
+    },
+  }),
+
+  P('autoembed-tamil', '⚡ AutoEmbed · Tamil Dub', {
+    kind: 'embed',
+    blurb: 'AutoEmbed direct Tamil Dub server stream (?lang=tamil).',
+    quality: '1080p',
+    tier: 2,
+    subs: true,
+    sandboxOk: false,
+    patterns: {
+      movie: 'https://nxsha.space/embed/movie/{tmdbId}?lang=tamil&autoplay=true',
+      tv: 'https://nxsha.space/embed/tv/{tmdbId}/{season}/{episode}?lang=tamil&autoplay=true',
+    },
+  }),
+
+  P('autoembed-telugu', '⚡ AutoEmbed · Telugu Dub', {
+    kind: 'embed',
+    blurb: 'AutoEmbed direct Telugu Dub server stream (?lang=telugu).',
+    quality: '1080p',
+    tier: 2,
+    subs: true,
+    sandboxOk: false,
+    patterns: {
+      movie: 'https://nxsha.space/embed/movie/{tmdbId}?lang=telugu&autoplay=true',
+      tv: 'https://nxsha.space/embed/tv/{tmdbId}/{season}/{episode}?lang=telugu&autoplay=true',
+    },
+  }),
+
   P('zxc-hindi', '⚡ Server: Hindi Dub (Official)', {
     kind: 'embed',
     blurb: 'Dedicated Multi-Language server with direct Hindi Dub priority (?dubLang=hi, ta, te).',
     quality: 'up to 1080p',
     tier: 2,
     subs: true,
-    sandboxOk: true,
+    // Proven in a live browser: inside a sandboxed frame it paints its own
+    // "Sandbox Not Supported" wall instead of a player, so it must be framed
+    // uncaged — which costs us the pop-up guard on this host. No server here
+    // is ad-free; the dub simply has no caged alternative that carries it.
+    sandboxOk: false,
     patterns: {
       movie: 'https://zxcstream.cc/player/movie/{tmdbId}?dubLang=hi',
       tv: 'https://zxcstream.cc/player/tv/{tmdbId}/{season}/{episode}?dubLang=hi',
     },
   }),
+
   P('zxc-tamil', '⚡ Server: Tamil Dub', {
     kind: 'embed',
     blurb: 'Tamil Dub priority stream from ZXCStream.',
     quality: 'up to 1080p',
     tier: 2,
     subs: true,
-    sandboxOk: true,
+    sandboxOk: false,
     patterns: {
       movie: 'https://zxcstream.cc/player/movie/{tmdbId}?dubLang=ta',
       tv: 'https://zxcstream.cc/player/tv/{tmdbId}/{season}/{episode}?dubLang=ta',
@@ -82,10 +142,34 @@ const PROVIDERS = [
     quality: 'up to 1080p',
     tier: 2,
     subs: true,
-    sandboxOk: true,
+    sandboxOk: false,
     patterns: {
       movie: 'https://zxcstream.cc/player/movie/{tmdbId}?dubLang=te',
       tv: 'https://zxcstream.cc/player/tv/{tmdbId}/{season}/{episode}?dubLang=te',
+    },
+  }),
+  P('embed-su-hindi', '🎬 Server: Hindi Dub · Embed.su', {
+    kind: 'embed',
+    blurb: 'Fast embed host with a subtitle/language menu; requests Hindi audio first (?dub_lang=hi).',
+    quality: 'up to 1080p',
+    tier: 2,
+    subs: true,
+    sandboxOk: false,
+    patterns: {
+      movie: 'https://embed.su/embed/movie/{tmdbId}?dub_lang=hi',
+      tv: 'https://embed.su/embed/tv/{tmdbId}/{season}/{episode}?dub_lang=hi',
+    },
+  }),
+  P('moviebox-hindi', '🎬 Server: Hindi Dub · MovieBox', {
+    kind: 'embed',
+    blurb: 'Lean multi-language player; requests Hindi audio first (?dub_lang=hi).',
+    quality: 'up to 1080p',
+    tier: 2,
+    subs: true,
+    sandboxOk: false,
+    patterns: {
+      movie: 'https://movie-box.live/embed/movie/{tmdbId}?dub_lang=hi',
+      tv: 'https://movie-box.live/embed/tv/{tmdbId}/{season}/{episode}?dub_lang=hi',
     },
   }),
 
@@ -99,8 +183,15 @@ const PROVIDERS = [
   //
   // `tier` is the advertised ceiling: 3 = 4K, 2 = 1080p, 1 = 720p.
   // No iframe provider has a verified audio-track API connected.
-  // VidLink displayed "Please Disable Sandbox" in a live browser, so its
-  // sandbox flag is off. Other existing sandbox flags are unchanged.
+  //
+  // `sandboxOk: false` means the host detects our pop-up cage and refuses to
+  // play inside it, so it is framed uncaged and its ads fall to the browser.
+  // Measured from this machine on 2026-11-01 by fetching every movie template
+  // and reading its own HTML: 2Embed and its mirror ship a literal
+  // "Sandbox not allowed — remove sandbox from the iframe to play" overlay with
+  // an `isReallySandboxed()` probe, and VidLink, ZXCStream (Hindi/Tamil/Telugu)
+  // were each seen painting the same wall in a live browser. VidSrc.pm,
+  // AutoEmbed, Smashy, VidFast (both domains) and Videasy carry no such check.
 
   P('vidlink', 'Server 1 · VidLink', {
     kind: 'embed',
@@ -113,14 +204,6 @@ const PROVIDERS = [
       movie: 'https://vidlink.pro/movie/{tmdbId}',
       tv: 'https://vidlink.pro/tv/{tmdbId}/{season}/{episode}',
     },
-  }),
-
-  P('vidlink-clean', 'Server 1 · VidLink + AdShield', {
-    kind: 'proxy',
-    upstream: 'vidlink',
-    blurb: 'AdShield: we fetch VidLink and strip its ad SDKs, and every asset it loads afterwards relays through us. VidLink still opens its player over a WebSocket that can see our origin, so this can stall where the direct server plays.',
-    quality: 'up to 1080p',
-    tier: 2,
   }),
 
   P('vidsrcpm', 'Server 2 · VidSrc.pm', {
@@ -136,33 +219,16 @@ const PROVIDERS = [
     },
   }),
 
-  P('vidsrcpm-clean', 'Server 2 · VidSrc.pm + AdShield', {
-    kind: 'proxy',
-    upstream: 'vidsrcpm',
-    subs: true,
-    blurb: 'AdShield: VidSrc.pm ships a plain HTML player rather than a WebSocket app, so it is the best candidate for cleaning — its ad scripts come out and its remaining assets relay through us.',
-    quality: 'up to 1080p',
-    tier: 2,
-  }),
-
   P('2embed', 'Server 3 · 2Embed', {
     kind: 'embed',
     blurb: 'Has its own internal server picker — good last resort.',
     quality: 'up to 1080p',
     tier: 2,
-    sandboxOk: true,
+    sandboxOk: false,
     patterns: {
       movie: 'https://www.2embed.cc/embed/{tmdbId}',
       tv: 'https://www.2embed.cc/embedtv/{tmdbId}?s={season}&e={episode}',
     },
-  }),
-
-  P('2embed-clean', 'Server 3 · 2Embed + AdShield', {
-    kind: 'proxy',
-    upstream: '2embed',
-    blurb: 'AdShield: 2Embed creates its player frame empty and fills it from script, so the relay re-routes that assignment too and the inner page gets cleaned as well.',
-    quality: 'up to 1080p',
-    tier: 2,
   }),
 
   P('2embedskin', 'Server 4 · 2Embed Mirror', {
@@ -170,7 +236,7 @@ const PROVIDERS = [
     blurb: 'Same fleet on a second domain — use when 2Embed rate-limits.',
     quality: 'up to 1080p',
     tier: 2,
-    sandboxOk: true,
+    sandboxOk: false,
     patterns: {
       movie: 'https://www.2embed.skin/embed/{tmdbId}',
       tv: 'https://www.2embed.skin/embedtv/{tmdbId}?s={season}&e={episode}',
@@ -187,14 +253,6 @@ const PROVIDERS = [
       movie: 'https://player.autoembed.co/embed/movie/{tmdbId}',
       tv: 'https://player.autoembed.co/embed/tv/{tmdbId}/{season}/{episode}',
     },
-  }),
-
-  P('autoembed-clean', 'Server 5 · AutoEmbed + AdShield', {
-    kind: 'proxy',
-    upstream: 'autoembed',
-    blurb: 'AdShield: we clean AutoEmbed and the player page it opens, so the ads on both are stripped. AutoEmbed then gates its source behind a bot check, which a proxied page often fails — if it sits idle, pick a source inside the frame.',
-    quality: 'up to 1080p',
-    tier: 2,
   }),
 
   P('smashy', 'Server 6 · SmashyStream', {
@@ -265,8 +323,12 @@ const PROVIDERS = [
 
 const byId = (id) => PROVIDERS.find((p) => p.id === id);
 
-/** Order the watchdog walks when a server refuses to start. */
-const FALLBACK_ORDER = ['vidlink', 'vidsrcpm', '2embed', '2embedskin', 'autoembed', 'smashy', 'vidfast', 'videasy', 'vidfastvc'];
+/**
+ * Order the watchdog walks when a server refuses to start.
+ * Cage-tolerant hosts lead: with the pop-up guard on, a host that sulks inside
+ * a sandbox wastes the whole startup budget before the watchdog moves on.
+ */
+const FALLBACK_ORDER = ['autoembed-multi', 'autoembed-hindi', 'zxc-hindi', 'vidsrcpm', 'autoembed-tamil', 'autoembed-telugu', 'videasy', 'autoembed', 'vidlink', 'smashy', '2embed', '2embedskin', 'vidfast', 'vidfastvc'];
 
 /** Embed servers only — used for host allowlisting and reachability probes. */
 const EMBED_IDS = PROVIDERS.filter((p) => p.kind === 'embed').map((p) => p.id);

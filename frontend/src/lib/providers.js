@@ -32,6 +32,26 @@ const FALLBACK = [
     patterns: { movie: 'https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8', tv: 'https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8' },
   },
   {
+    id: 'autoembed-multi', label: '🔥 AutoEmbed · Multi-Audio (Nitro)', kind: 'embed', quality: '1080p', tier: 1, subs: true, sandboxOk: false,
+    blurb: 'AutoEmbed Multi-Language player with in-player Audio menu (Hindi, Tamil, Telugu, Malayalam, Kannada), Nitro server & 1080p quality selector.',
+    patterns: { movie: 'https://nxsha.space/embed/movie/{tmdbId}', tv: 'https://nxsha.space/embed/tv/{tmdbId}/{season}/{episode}' },
+  },
+  {
+    id: 'autoembed-hindi', label: '⚡ AutoEmbed · Hindi Dub (Official)', kind: 'embed', quality: '1080p', tier: 1, subs: true, sandboxOk: false,
+    blurb: 'AutoEmbed direct Hindi Dub server stream (?lang=hindi).',
+    patterns: { movie: 'https://nxsha.space/embed/movie/{tmdbId}?lang=hindi&autoplay=true', tv: 'https://nxsha.space/embed/tv/{tmdbId}/{season}/{episode}?lang=hindi&autoplay=true' },
+  },
+  {
+    id: 'autoembed-tamil', label: '⚡ AutoEmbed · Tamil Dub', kind: 'embed', quality: '1080p', tier: 2, subs: true, sandboxOk: false,
+    blurb: 'AutoEmbed direct Tamil Dub server stream (?lang=tamil).',
+    patterns: { movie: 'https://nxsha.space/embed/movie/{tmdbId}?lang=tamil&autoplay=true', tv: 'https://nxsha.space/embed/tv/{tmdbId}/{season}/{episode}?lang=tamil&autoplay=true' },
+  },
+  {
+    id: 'autoembed-telugu', label: '⚡ AutoEmbed · Telugu Dub', kind: 'embed', quality: '1080p', tier: 2, subs: true, sandboxOk: false,
+    blurb: 'AutoEmbed direct Telugu Dub server stream (?lang=telugu).',
+    patterns: { movie: 'https://nxsha.space/embed/movie/{tmdbId}?lang=telugu&autoplay=true', tv: 'https://nxsha.space/embed/tv/{tmdbId}/{season}/{episode}?lang=telugu&autoplay=true' },
+  },
+  {
     id: 'zxc-hindi', label: '⚡ Hindi Dub', kind: 'embed', quality: '1080p', tier: 2, subs: true,
     blurb: 'Multi-Language server with direct Hindi Dub priority (?dubLang=hi).',
     patterns: { movie: 'https://zxcstream.cc/player/movie/{tmdbId}?dubLang=hi', tv: 'https://zxcstream.cc/player/tv/{tmdbId}/{season}/{episode}?dubLang=hi' },
@@ -47,13 +67,25 @@ const FALLBACK = [
     patterns: { movie: 'https://zxcstream.cc/player/movie/{tmdbId}?dubLang=te', tv: 'https://zxcstream.cc/player/tv/{tmdbId}/{season}/{episode}?dubLang=te' },
   },
   {
+    id: 'embed-su-hindi', label: '🎬 Hindi Dub · Embed.su', kind: 'embed', quality: 'up to 1080p', tier: 2, subs: true,
+    blurb: 'Fast embed host with a subtitle/language menu; requests Hindi audio first (?dub_lang=hi).',
+    patterns: {
+      movie: 'https://embed.su/embed/movie/{tmdbId}?dub_lang=hi',
+      tv: 'https://embed.su/embed/tv/{tmdbId}/{season}/{episode}?dub_lang=hi',
+    },
+  },
+  {
+    id: 'moviebox-hindi', label: '🎬 Hindi Dub · MovieBox', kind: 'embed', quality: 'up to 1080p', tier: 2, subs: true,
+    blurb: 'Lean multi-language player; requests Hindi audio first (?dub_lang=hi).',
+    patterns: {
+      movie: 'https://movie-box.live/embed/movie/{tmdbId}?dub_lang=hi',
+      tv: 'https://movie-box.live/embed/tv/{tmdbId}/{season}/{episode}?dub_lang=hi',
+    },
+  },
+  {
     id: 'vidlink', label: 'Server 1 · VidLink', kind: 'embed', quality: 'up to 1080p', tier: 2, subs: true,
     blurb: 'Lean player, least overlay chrome — starts fastest here.',
     patterns: { movie: 'https://vidlink.pro/movie/{tmdbId}', tv: 'https://vidlink.pro/tv/{tmdbId}/{season}/{episode}' },
-  },
-  {
-    id: 'vidlink-clean', label: 'Server 1 · VidLink + AdShield', kind: 'proxy', upstream: 'vidlink', quality: 'up to 1080p', tier: 2,
-    blurb: 'AdShield: we fetch VidLink and strip its ad SDKs, and every asset it loads afterwards relays through us. VidLink still opens its player over a WebSocket that can see our origin, so this can stall where the direct server plays.', patterns: null,
   },
   {
     id: 'vidsrcpm', label: 'Server 2 · VidSrc.pm', kind: 'embed', quality: 'up to 1080p', tier: 2, subs: true,
@@ -61,17 +93,9 @@ const FALLBACK = [
     patterns: { movie: 'https://vidsrc.pm/embed/movie/{tmdbId}', tv: 'https://vidsrc.pm/embed/tv/{tmdbId}/{season}/{episode}' },
   },
   {
-    id: 'vidsrcpm-clean', label: 'Server 2 · VidSrc.pm + AdShield', kind: 'proxy', upstream: 'vidsrcpm', quality: 'up to 1080p', tier: 2, subs: true,
-    blurb: 'AdShield: VidSrc.pm ships a plain HTML player rather than a WebSocket app, so it is the best candidate for cleaning — its ad scripts come out and its remaining assets relay through us.', patterns: null,
-  },
-  {
     id: '2embed', label: 'Server 3 · 2Embed', kind: 'embed', quality: 'up to 1080p', tier: 2,
     blurb: 'Has its own internal server picker — good last resort.',
     patterns: { movie: 'https://www.2embed.cc/embed/{tmdbId}', tv: 'https://www.2embed.cc/embedtv/{tmdbId}?s={season}&e={episode}' },
-  },
-  {
-    id: '2embed-clean', label: 'Server 3 · 2Embed + AdShield', kind: 'proxy', upstream: '2embed', quality: 'up to 1080p', tier: 2,
-    blurb: 'AdShield: 2Embed creates its player frame empty and fills it from script, so the relay re-routes that assignment too and the inner page gets cleaned as well.', patterns: null,
   },
   {
     id: '2embedskin', label: 'Server 4 · 2Embed Mirror', kind: 'embed', quality: 'up to 1080p', tier: 2,
@@ -85,10 +109,6 @@ const FALLBACK = [
       movie: 'https://player.autoembed.co/embed/movie/{tmdbId}',
       tv: 'https://player.autoembed.co/embed/tv/{tmdbId}/{season}/{episode}',
     },
-  },
-  {
-    id: 'autoembed-clean', label: 'Server 5 · AutoEmbed + AdShield', kind: 'proxy', upstream: 'autoembed', quality: 'up to 1080p', tier: 2,
-    blurb: 'AdShield: we clean AutoEmbed and the player page it opens, so the ads on both are stripped. AutoEmbed then gates its source behind a bot check, which a proxied page often fails — if it sits idle, pick a source inside the frame.', patterns: null,
   },
   {
     id: 'smashy', label: 'Server 6 · SmashyStream', kind: 'embed', quality: 'up to 1080p', tier: 2,
@@ -115,16 +135,21 @@ const FALLBACK = [
   },
 ].map(unsupportedAudio);
 
-const FALLBACK_ORDER = ['vidlink', 'vidsrcpm', '2embed', '2embedskin', 'autoembed', 'smashy', 'vidfast', 'videasy', 'vidfastvc'];
+const FALLBACK_ORDER = ['autoembed-multi', 'autoembed-hindi', 'zxc-hindi', 'vidsrcpm', 'autoembed-tamil', 'autoembed-telugu', 'videasy', 'autoembed', 'vidlink', 'smashy', '2embed', '2embedskin', 'vidfast', 'vidfastvc', 'embed-su-hindi', 'moviebox-hindi'];
 
-// VidLink displayed "Please Disable Sandbox" in a live browser.
-// Preserve every other embed's existing sandbox flag.
+// Hosts that detect our pop-up cage and refuse to play inside it, measured by
+// reading each host's own page (2Embed ships a "Sandbox not allowed" overlay)
+// and confirmed in a live browser for VidLink and the ZXCStream dub servers.
+const CAGE_SNIFFERS = ['vidlink', 'autoembed-multi', 'autoembed-hindi', 'autoembed-tamil', 'autoembed-telugu', 'zxc-hindi', 'zxc-tamil', 'zxc-telugu', '2embed', '2embedskin'];
 for (const p of FALLBACK) {
-  if (p.kind === 'embed') p.sandboxOk = p.id !== 'vidlink';
+  if (p.kind === 'embed') p.sandboxOk = !CAGE_SNIFFERS.includes(p.id);
 }
 
-/** Server a viewer lands on before the backend health probe answers. */
-export const DEFAULT_SERVER = 'vidlink';
+/**
+ * Server a viewer lands on before the backend health probe answers.
+ * AutoEmbed Multi-Audio by default so viewer gets in-player Audio & Server switching!
+ */
+export const DEFAULT_SERVER = 'autoembed-multi';
 
 let registry = null;
 let healthPromise = null;
@@ -209,19 +234,6 @@ export function buildSource(providerId, args) {
     };
   }
 
-  if (provider.kind === 'proxy') {
-    const qs = new URLSearchParams({
-      provider: provider.id,
-      tmdbId: String(args.tmdbId),
-      type: args.type || 'movie',
-    });
-    if (args.type === 'tv') {
-      qs.set('season', String(args.season || 1));
-      qs.set('episode', String(args.episode || 1));
-    }
-    return { ok: true, kind: 'proxy', provider, url: `${API}/proxy/stream?${qs.toString()}`, langApplied: false };
-  }
-
   if (provider.kind === 'hls') {
     const key = args.type === 'tv' ? 'tv' : 'movie';
     const url = provider.patterns?.[key] || provider.patterns?.movie || args.customHlsUrl;
@@ -237,7 +249,7 @@ export function buildSource(providerId, args) {
 
 /** Servers the watchdog may auto-advance through (never auto-lands on trailer). */
 export function embedServerIds() {
-  return providersSync().filter((p) => p.kind === 'embed' || p.kind === 'proxy' || p.kind === 'hls').map((p) => p.id);
+  return providersSync().filter((p) => p.kind === 'embed' || p.kind === 'hls').map((p) => p.id);
 }
 
 export const AUDIO_LABELS = {

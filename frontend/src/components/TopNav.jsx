@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence, useMotionValueEvent, useScroll } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown, Globe, ListVideo, Search, Users, X } from 'lucide-react';
-import { LANGUAGES, WATCH_REGIONS, getUserName, poster, titleOf, yearOf } from '../lib/config';
+import { LANGUAGES, PARTY_ORIGIN, WATCH_REGIONS, getUserName, poster, titleOf, yearOf } from '../lib/config';
 import { tmdb } from '../lib/api';
 import { usePrefs } from '../context/Prefs';
 import { spring, flipIn3d } from '../lib/motion';
@@ -337,16 +337,21 @@ export default function TopNav() {
 
           <Picker icon={Globe} label="Releases from" value={region} onChange={setRegion} options={WATCH_REGIONS} width="w-56" />
 
-          <motion.button
-            whileHover={{ y: -2, scale: 1.05, z: 20 }}
-            whileTap={{ y: 1, scale: 0.93 }}
-            transition={spring.snappy}
-            style={{ transformPerspective: 500 }}
-            onClick={() => navigate('/create-group')}
-            className="btn-3d btn-3d-glass hidden items-center gap-1.5 rounded-xl border border-white/12 bg-white/[0.05] px-3 py-1.5 text-xs font-bold text-white transition-colors hover:border-primary/45 hover:bg-primary/15 sm:flex"
-          >
-            <Users className="h-3.5 w-3.5 icon-bob" /> Watch Party
-          </motion.button>
+          {/* The live room is the one feature that needs a process holding a
+              WebSocket, so the door only appears when such a backend is
+              configured — on a serverless build it would open an empty theatre. */}
+          {PARTY_ORIGIN && (
+            <motion.button
+              whileHover={{ y: -2, scale: 1.05, z: 20 }}
+              whileTap={{ y: 1, scale: 0.93 }}
+              transition={spring.snappy}
+              style={{ transformPerspective: 500 }}
+              onClick={() => navigate('/create-group')}
+              className="btn-3d btn-3d-glass hidden items-center gap-1.5 rounded-xl border border-white/12 bg-white/[0.05] px-3 py-1.5 text-xs font-bold text-white transition-colors hover:border-primary/45 hover:bg-primary/15 sm:flex"
+            >
+              <Users className="h-3.5 w-3.5 icon-bob" /> Watch Party
+            </motion.button>
+          )}
 
           <motion.button
             onClick={() => navigate('/auth')}

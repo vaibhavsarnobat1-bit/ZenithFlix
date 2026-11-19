@@ -1,5 +1,5 @@
 import { io } from 'socket.io-client';
-import { API_ORIGIN } from './config';
+import { SOCKET_ORIGIN } from './config';
 
 export function roomCredentials(roomId) {
   try { return JSON.parse(sessionStorage.getItem(`zf.room.${roomId}`) || '{}'); } catch { return {}; }
@@ -25,7 +25,7 @@ export function partyRequest(socket, event, payload) {
 
 /** The server reserves a cryptographic room ID; opening a URL never creates one. */
 export async function createParty({ name, username = 'Guest', nowPlaying }) {
-  const socket = io(API_ORIGIN, { transports: ['websocket', 'polling'], autoConnect: false, reconnection: false });
+  const socket = io(SOCKET_ORIGIN, { transports: ['websocket', 'polling'], autoConnect: false, reconnection: false });
   try {
     await new Promise((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error('Cannot reach the party backend. Start it locally or configure its public HTTPS URL.')), 10000);

@@ -7,7 +7,8 @@ import {
   RefreshCw, Search, Send, Share2, Users, Wifi, X,
 } from 'lucide-react';
 import Player from '../components/Player';
-import { API_ORIGIN, PUBLIC_WEB_ORIGIN, mediaTypeOf, poster, titleOf, yearOf } from '../lib/config';
+import NeedsBackend from '../components/NeedsBackend';
+import { PARTY_ORIGIN, PUBLIC_WEB_ORIGIN, SOCKET_ORIGIN, mediaTypeOf, poster, titleOf, yearOf } from '../lib/config';
 import { DEFAULT_SERVER } from '../lib/providers';
 import { matchesYouTubeSync } from '../lib/youtube';
 import { partyRequest, roomCredentials, saveRoomCredentials } from '../lib/party';
@@ -109,7 +110,17 @@ function QueuePanel({ onClose, onPick }) {
   );
 }
 
+/**
+ * A theatre is a WebSocket, and a WebSocket is a process that never sleeps.
+ * This build has no such backend configured, so the honest answer is to say so
+ * and point at the watch-together link, which needs nothing but the two phones.
+ * The wrapper exists so the guard never sits between React and its hooks.
+ */
 export default function TheatreRoom() {
+  return PARTY_ORIGIN ? <TheatreRoomInner /> : <NeedsBackend />;
+}
+
+function TheatreRoomInner() {
   const { roomId } = useParams();
   const navigate = useNavigate();
   // Invitations identify an existing room only. Never seed media from query strings.
@@ -314,7 +325,7 @@ export default function TheatreRoom() {
       return undefined;
     }
     setStatus('joining');
-    const sock = io(API_ORIGIN, { transports: ['websocket', 'polling'], autoConnect: false });
+    const sock = io(SOCKET_ORIGIN, { transports: ['websocket', 'polling'], autoConnect: false });
     socketRef.current = sock;
     const join = async () => {
       if (!active || !sock.connected || leavingRef.current) return;

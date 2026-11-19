@@ -9,9 +9,23 @@ const local = host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
 
 // Public installs default to a same-origin reverse proxy, not an unconfigured
 // HTTPS port 5000. A separately deployed API uses VITE_API_BASE (origin only).
-export const API_ORIGIN = (import.meta.env.VITE_API_BASE || (local ? `http://${host}:5000` : pageOrigin)).replace(/\/$/, '');
+// localhost always wins: with a hosted VITE_API_BASE baked in, `npm run dev`
+// must still talk to the backend running next to you, not to production.
+export const API_ORIGIN = (local ? `http://${host}:5000` : import.meta.env.VITE_API_BASE || pageOrigin).replace(/\/$/, '');
 export const PUBLIC_WEB_ORIGIN = import.meta.env.VITE_PUBLIC_WEB_ORIGIN || '';
 export const API = `${API_ORIGIN}/api`;
+
+/**
+ * Origin of the always-on backend that can hold a WebSocket — the only thing
+ * that makes a live Watch Party room possible. Empty on the hosted build, so
+ * the room entry points stay hidden and sharing falls back to the serverless
+ * "Watch Together" link. Local development uses the same backend as the API.
+ */
+export const PARTY_ORIGIN = local ? API_ORIGIN : String(import.meta.env.VITE_PARTY_BASE || '').replace(/\/$/, '');
+export const PARTY_API = PARTY_ORIGIN ? `${PARTY_ORIGIN}/api` : '';
+
+/** Watch Party needs a process that can hold a WebSocket, not an edge function. */
+export const SOCKET_ORIGIN = PARTY_ORIGIN || API_ORIGIN;
 
 export const IMG = {
   logo: 'https://image.tmdb.org/t/p/w92',

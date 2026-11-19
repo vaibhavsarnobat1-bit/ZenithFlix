@@ -3,10 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Check, ChevronDown, Play, Plus, Share2, Users, Wand2 } from 'lucide-react';
 import { tmdb } from '../lib/api';
-import { IMG, ageRating, mediaTypeOf, poster, ratingOf, runtimeLabel, streamDateLabel, titleOf, yearOf } from '../lib/config';
+import { IMG, PARTY_ORIGIN, ageRating, mediaTypeOf, poster, ratingOf, runtimeLabel, streamDateLabel, titleOf, yearOf } from '../lib/config';
 import { DEFAULT_SERVER } from '../lib/providers';
 import { createParty } from '../lib/party';
 import { getUserName } from '../lib/config';
+import { newRoomCode, INVITE_PARAM, rememberSession, savedSession, START_PARAM, TOGETHER_PARAM } from '../lib/together';
+import { copyText } from '../lib/invite';
 import { usePrefs } from '../context/Prefs';
 import { scrim, spring, stagger, item, sheet3d } from '../lib/motion';
 import { Badge, CloseButton, RatingRing, SmartImage, SegmentedTabs, toast } from './ui';
@@ -171,14 +173,36 @@ export default function DetailSheet({ item, onClose }) {
     onClose();
   };
 
+  /**
+   * A bare /watch/… link is a title, not a place — the friend lands on season 1
+   * whatever you were about to watch. Send them the coordinates too.
+   */
   const share = async () => {
-    const url = `${window.location.origin}/watch/${type}/${item.id}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      toast('Link copied to clipboard');
-    } catch {
-      toast('Could not copy link', { tone: 'warn', icon: Share2 });
+    const q = new URLSearchParams();
+    if (type === 'tv') {
+      q.set('season', String(season));
+      q.set('episode', '1');
     }
+    if (trailerKey) q.set('yt', trailerKey);
+    const url = `${window.location.origin}/watch/${type}/${item.id}${q.toString() ? `?${q}` : ''}`;
+    try {
+      await copyText(url);
+      toast(type === 'tv' ? `Link copied — starts at season ${season}` : 'Link copied to clipboard');
+    } catch (error) {
+      toast(error.message || 'Could not copy link', { tone: 'warn', icon: Share2 });
+    }
+  };
+
+  /**
+   * Minting the session here, then navigating, is what makes the sheet's button
+   * honest: by the time the watch page opens, the countdown is already running
+   * and the link is already on the screen — no second tap to find.
+   */
+  const watchTogether = () => {
+    const code = savedSession(type, item.id)?.code || newRoomCode();
+    const startAt = Date.now() + 60 * 1000;
+    rememberSession({ type, id: item.id, season, episode: 1, provider: DEFAULT_SERVER, code, startAt });
+    play({ [TOGETHER_PARAM]: code, [START_PARAM]: String(Math.round(startAt)), [INVITE_PARAM]: '1' });
   };
 
   return (
@@ -247,25 +271,38 @@ export default function DetailSheet({ item, onClose }) {
               <motion.button
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.96 }}
-                disabled={creatingParty}
-                onClick={async () => {
-                  if (creatingParty) return;
-                  setCreatingParty(true);
-                  try {
-                    const id = await createParty({ name: label, username: getUserName() || 'Guest', nowPlaying: {
-                      type, tmdbId: item.id, title: label, provider: DEFAULT_SERVER,
-                      season, episode: 1, poster: item.poster_path || null,
-                    } });
-                    navigate(`/room/${id}`);
-                    onClose();
-                  } catch (error) {
-                    toast(error.message, { tone: 'warn', ttl: 6000 });
-                  } finally { setCreatingParty(false); }
-                }}
+                onClick={watchTogether}
+                title="Make a link with a shared countdown, then send it"
                 className="flex items-center gap-2 rounded-full border border-secondary/45 bg-secondary/15 px-4 py-2 text-[13px] font-bold text-white backdrop-blur-md hover:bg-secondary/25"
               >
-                <Users className="h-3.5 w-3.5" /> {creatingParty ? 'Creating…' : 'Create Watch Party'}
+                <Users className="h-3.5 w-3.5" /> Watch together
               </motion.button>
+
+              {PARTY_ORIGIN && (
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.96 }}
+                  disabled={creatingParty}
+                  title="Live room: pause and seek mirror between everyone, needs the always-on backend"
+                  onClick={async () => {
+                    if (creatingParty) return;
+                    setCreatingParty(true);
+                    try {
+                      const id = await createParty({ name: label, username: getUserName() || 'Guest', nowPlaying: {
+                        type, tmdbId: item.id, title: label, provider: DEFAULT_SERVER,
+                        season, episode: 1, poster: item.poster_path || null,
+                      } });
+                      navigate(`/room/${id}`);
+                      onClose();
+                    } catch (error) {
+                      toast(error.message, { tone: 'warn', ttl: 6000 });
+                    } finally { setCreatingParty(false); }
+                  }}
+                  className="flex items-center gap-2 rounded-full border border-white/15 bg-black/45 px-4 py-2 text-[13px] font-bold text-textSub backdrop-blur-md hover:text-white"
+                >
+                  <Users className="h-3.5 w-3.5" /> {creatingParty ? 'Creating…' : 'Live room'}
+                </motion.button>
+              )}
             </div>
           </div>
         </div>

@@ -7,7 +7,7 @@ import Row from '../components/Row';
 import Billboard from '../components/Billboard';
 import { LogoMark } from '../components/Logo3D';
 import { tmdb } from '../lib/api';
-import { mediaTypeOf } from '../lib/config';
+import { PARTY_ORIGIN, mediaTypeOf } from '../lib/config';
 import { usePrefs } from '../context/Prefs';
 import { spring, stagger, item3d, splitLetters, letter } from '../lib/motion';
 
@@ -52,26 +52,34 @@ export default function Browse() {
 
   const openSheet = useCallback((item_, sharedId) => setSheet({ ...item_, _sharedId: sharedId }), []);
 
-  /* Priority feeds first (top of page), secondary feeds after a tiny tick to unblock initial paint */
+  /* One request per group, not per row: on the hosted build every call is a
+     round trip to a cold-starting function, so twelve calls meant twelve
+     chances to wait. Priority rows first, the rest a tick later. */
   useEffect(() => {
     let dead = false;
     setFeeds([]);
     setLoading(true);
     setError(null);
-    let pending = PLAN.length;
+    let pending = 2;
 
     const settle = () => {
       pending -= 1;
       if (pending <= 0 && !dead) setLoading(false);
     };
 
-    const fetchFeed = (p) =>
+    const fetchGroup = (plan) =>
       tmdb
-        .feed(p.name)
-        .then((results) => !dead && setFeeds((prev) => [...prev.filter((f) => f.name !== p.name), { name: p.name, results }]))
+        .feeds(plan.map((p) => p.name))
+        .then((rows) => {
+          if (dead) return;
+          setFeeds((prev) => {
+            const names = new Set(plan.map((p) => p.name));
+            return [...prev.filter((f) => !names.has(f.name)), ...rows];
+          });
+        })
         .catch((e) => {
           if (!dead) {
-            setFeeds((prev) => [...prev.filter((f) => f.name !== p.name), { name: p.name, results: [] }]);
+            setFeeds((prev) => [...prev, ...plan.map((p) => ({ name: p.name, results: [] }))]);
             setError((prev) => prev || e?.response?.data?.detail || e.message);
           }
         })
@@ -81,12 +89,10 @@ export default function Browse() {
     const priority = PLAN.slice(0, 4);
     const secondary = PLAN.slice(4);
 
-    priority.forEach((p) => fetchFeed(p));
+    fetchGroup(priority);
 
     const timer = setTimeout(() => {
-      if (!dead) {
-        secondary.forEach((p) => fetchFeed(p));
-      }
+      if (!dead) fetchGroup(secondary);
     }, 150);
 
     return () => {
@@ -187,10 +193,17 @@ export default function Browse() {
                   <div className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
                     <Flame className="h-3.5 w-3.5 icon-breathe" /> Watch together
                   </div>
-                  <h3 className="title-3d font-display text-2xl font-extrabold tracking-tighter2 text-white">Frame-locked watch parties</h3>
-                  <p className="mt-2 max-w-[60ch] text-[13.5px] leading-relaxed text-textSub">
-                    Open a room, share the 7-character ID, and every pause, seek and episode change mirrors to your friends in under a second. Chat and reactions live in the sidebar.
+                  <h3 className="title-3d font-display text-2xl font-extrabold tracking-tighter2 text-white">One link, one countdown, both press play</h3>
+                  <p className="mt-2 max-w-[62ch] text-[13.5px] leading-relaxed text-textSub">
+                    Open any title, tap <strong className="font-bold text-white">Watch together</strong>, choose when to start and send the link. Your
+                    friend taps it, lands on the same episode and server, and both phones count down to the same second. No app, no account, no room ID
+                    to read out loud — and nothing of ours to keep online.
                   </p>
+                  {PARTY_ORIGIN && (
+                    <p className="mt-2 max-w-[62ch] text-[12px] leading-relaxed text-textMuted">
+                      This build also has the always-on backend, so a live room is available: pause, seek and episode changes mirror between everyone.
+                    </p>
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-2.5">
                   <motion.button
@@ -198,11 +211,23 @@ export default function Browse() {
                     whileTap={{ y: 2, scale: 0.94, z: 0 }}
                     transition={spring.snappy}
                     style={{ transformPerspective: 550 }}
-                    onClick={() => navigate('/create-group')}
+                    onClick={() => navigate('/search')}
                     className="sheen btn-3d btn-3d-ember rounded-xl bg-white px-5 py-3 font-display text-sm font-bold text-black hover:bg-primaryLight"
                   >
-                    Create room
+                    Pick something to watch
                   </motion.button>
+                  {PARTY_ORIGIN && (
+                    <motion.button
+                      whileHover={{ y: -3, scale: 1.04, z: 20 }}
+                      whileTap={{ y: 2, scale: 0.94, z: 0 }}
+                      transition={spring.snappy}
+                      style={{ transformPerspective: 550 }}
+                      onClick={() => navigate('/create-group')}
+                      className="btn-3d btn-3d-glass rounded-xl border border-white/20 bg-black/30 px-5 py-3 font-display text-sm font-bold text-white hover:bg-white/10"
+                    >
+                      Live room
+                    </motion.button>
+                  )}
                   <motion.button
                     whileHover={{ y: -3, scale: 1.04, z: 20 }}
                     whileTap={{ y: 2, scale: 0.94, z: 0 }}
