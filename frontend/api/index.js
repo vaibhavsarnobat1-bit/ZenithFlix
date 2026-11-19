@@ -488,7 +488,7 @@ const PROVIDERS = [
   }),
 ];
 
-const FALLBACK_ORDER = ['autoembed-multi', 'autoembed-hindi', 'zxc-hindi', 'vidsrcpm', 'autoembed-tamil', 'autoembed-telugu', 'videasy', 'autoembed', 'vidlink', 'smashy', '2embed', '2embedskin', 'vidfast', 'vidfastvc'];
+const FALLBACK_ORDER = ['vidsrcpm', 'autoembed-multi', 'autoembed-hindi', 'zxc-hindi', 'autoembed-tamil', 'autoembed-telugu', 'videasy', 'autoembed', 'vidlink', 'smashy', '2embed', '2embedskin', 'vidfast', 'vidfastvc'];
 
 /* ──────────────────────────────────────────────────────────────
    Embed-host reachability — mirror of GET /api/proxy/health

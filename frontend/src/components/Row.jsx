@@ -77,6 +77,11 @@ export function TitleCard({ title, index = 0, variant = 'poster', progress, onOp
         {/* top-left badges */}
         <div className="absolute left-1.5 top-1.5 flex flex-col items-start gap-1">
           <QualityBadge quality={quality} />
+          {title.original_language === 'hi' && (
+            <span className="rounded border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-bold text-amber-300">
+              हिन्दी
+            </span>
+          )}
           {type === 'tv' && (
             <Badge tone="violet" className="!text-[9px]">
               <Tv className="h-2.5 w-2.5" /> Series
