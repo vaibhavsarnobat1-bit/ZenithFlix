@@ -917,8 +917,9 @@ export default function Player({
                 setFailed(false);
               }}
               onError={() => setFailed(true)}
-              allow="autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write"
+              allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
               allowFullScreen
+              referrerPolicy="no-referrer"
               className={`absolute inset-0 z-10 h-full w-full border-0 ${ready ? 'opacity-100' : 'opacity-0'} transition-opacity duration-500`}
             />
           ) : (

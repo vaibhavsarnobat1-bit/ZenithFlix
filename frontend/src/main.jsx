@@ -13,6 +13,13 @@ if (!['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname)) war
 // Opting out before the first paint is the only reliable place to do it.
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
 
+// Service Worker — ad-domain blocker (all browsers, no extension needed)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
+  });
+}
+
 // Anti-popup guard: intercept unwanted ad tabs/popunders spawned by third-party embed scripts
 try {
   const originalOpen = window.open;
