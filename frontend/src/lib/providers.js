@@ -135,7 +135,7 @@ const FALLBACK = [
   },
 ].map(unsupportedAudio);
 
-const FALLBACK_ORDER = ['autoembed-multi', 'autoembed-hindi', 'zxc-hindi', 'vidsrcpm', 'autoembed-tamil', 'autoembed-telugu', 'videasy', 'autoembed', 'vidlink', 'smashy', '2embed', '2embedskin', 'vidfast', 'vidfastvc', 'embed-su-hindi', 'moviebox-hindi'];
+const FALLBACK_ORDER = ['vidsrcpm', 'autoembed-multi', 'autoembed-hindi', 'zxc-hindi', 'autoembed-tamil', 'autoembed-telugu', 'videasy', 'autoembed', 'vidlink', 'smashy', '2embed', '2embedskin', 'vidfast', 'vidfastvc', 'embed-su-hindi', 'moviebox-hindi'];
 
 // Hosts that detect our pop-up cage and refuse to play inside it, measured by
 // reading each host's own page (2Embed ships a "Sandbox not allowed" overlay)
@@ -147,9 +147,9 @@ for (const p of FALLBACK) {
 
 /**
  * Server a viewer lands on before the backend health probe answers.
- * AutoEmbed Multi-Audio by default so viewer gets in-player Audio & Server switching!
+ * VidSrc.pm as default — reliable and fast.
  */
-export const DEFAULT_SERVER = 'autoembed-multi';
+export const DEFAULT_SERVER = 'vidsrcpm';
 
 let registry = null;
 let healthPromise = null;

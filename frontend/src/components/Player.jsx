@@ -928,59 +928,16 @@ export default function Player({
           )}
         </div>
 
-        {/* Audio + room badges go top-left: every one of these hosts paints its
-            own control bar along the bottom of the frame, and our buttons were
-            sitting on top of theirs. */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-3 p-3">
-          <div className="pointer-events-auto flex flex-wrap items-center gap-1.5 pr-[13rem]">
-            <Badge tone="muted" title="The iframe has not reported an active audio track">
-              <Volume2 className="h-2.5 w-2.5" /> Audio unverified
-            </Badge>
-            {cage && (
-              <Badge tone="live" title="This frame is sandboxed without pop-up permission — an ad tab cannot open from it">
-                <Shield className="h-2.5 w-2.5" /> Ad tabs blocked
-              </Badge>
-            )}
-            {blockPopups && !cage && source.kind === 'embed' && (
-              <Badge tone="gold" title="This server detects sandboxing and would refuse to play, so its frame is uncaged — catch its pop-up tabs with a browser pop-up blocker, or pick a server without this warning">
-                <AlertTriangle className="h-2.5 w-2.5" /> Can&apos;t cage this server
-              </Badge>
-            )}
-            {party && (
+        {/* Audio + room badges go top-left: only show party badge */}
+        {party && (
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-3 p-3">
+            <div className="pointer-events-auto flex flex-wrap items-center gap-1.5">
               <Badge tone="violet" title="Room state">
                 <Gauge className="h-2.5 w-2.5" /> {party}
               </Badge>
-            )}
+            </div>
           </div>
-        </div>
-
-        <div className="pointer-events-none absolute inset-x-0 bottom-10 z-30 flex items-end justify-end gap-3 p-3 sm:bottom-12">
-          <div className="pointer-events-auto flex items-center gap-1.5 rounded-xl border border-white/10 bg-black/75 p-1 shadow-lg backdrop-blur-md">
-            {!follow && (
-              <button
-                onClick={() => setPanel(true)}
-                title="Playback settings"
-                className={`grid h-8 w-8 place-items-center rounded-lg border transition-colors ${panel ? 'border-primary/45 bg-primary/20 text-white' : 'border-white/10 bg-white/[0.04] text-white/80 hover:text-white'}`}
-              >
-                <Sliders className="h-3.5 w-3.5" />
-              </button>
-            )}
-            <button
-              onClick={() => setTheater((v) => !v)}
-              title="Theater mode (T)"
-              className={`grid h-8 w-8 place-items-center rounded-lg border transition-colors ${theater ? 'border-primary/45 bg-primary/20 text-white' : 'border-white/10 bg-white/[0.04] text-white/80 hover:text-white'}`}
-            >
-              {theater ? <Minimize className="h-3.5 w-3.5" /> : <Expand className="h-3.5 w-3.5" />}
-            </button>
-            <button
-              onClick={toggleFullscreen}
-              title="Fullscreen (F)"
-              className="grid h-8 w-8 place-items-center rounded-lg border border-white/10 bg-white/[0.04] text-white/80 transition-colors hover:text-white"
-            >
-              <Maximize className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </div>
+        )}
 
         {/* still black, or frozen mid-film? explicit escape hatches — we cannot
             detect iframe internals, so we hand the viewer both fixes: retry here
@@ -1029,6 +986,33 @@ export default function Player({
           )}
         </AnimatePresence>
       </motion.div>
+
+      {/* Controls outside the iframe so they always receive clicks reliably */}
+      <div className="mt-1.5 flex items-center justify-end gap-1.5">
+        {!follow && (
+          <button
+            onClick={() => setPanel(true)}
+            title="Playback settings"
+            className={`grid h-9 w-9 place-items-center rounded-xl border transition-colors ${panel ? 'border-primary/55 bg-primary/20 text-white' : 'border-white/12 bg-white/[0.04] text-textSub hover:border-white/25 hover:text-white'}`}
+          >
+            <Sliders className="h-4 w-4" />
+          </button>
+        )}
+        <button
+          onClick={() => setTheater((v) => !v)}
+          title={theater ? 'Exit Theater mode (T)' : 'Theater mode (T)'}
+          className={`grid h-9 w-9 place-items-center rounded-xl border transition-colors ${theater ? 'border-primary/55 bg-primary/20 text-white' : 'border-white/12 bg-white/[0.04] text-textSub hover:border-white/25 hover:text-white'}`}
+        >
+          {theater ? <Minimize className="h-4 w-4" /> : <Expand className="h-4 w-4" />}
+        </button>
+        <button
+          onClick={toggleFullscreen}
+          title={fullscreen ? 'Exit Fullscreen (F)' : 'Fullscreen (F)'}
+          className={`grid h-9 w-9 place-items-center rounded-xl border transition-colors ${fullscreen ? 'border-primary/55 bg-primary/20 text-white' : 'border-white/12 bg-white/[0.04] text-textSub hover:border-white/25 hover:text-white'}`}
+        >
+          {fullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+        </button>
+      </div>
 
       <p className="mt-2 flex items-center gap-1.5 px-1 text-[11px] text-textMuted">
         <Loader className="h-3 w-3" />
