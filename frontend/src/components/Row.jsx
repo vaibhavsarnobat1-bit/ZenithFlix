@@ -58,7 +58,6 @@ export function TitleCard({ title, index = 0, variant = 'poster', progress, onOp
       className="scene group relative w-[clamp(140px,17vw,190px)] flex-shrink-0 snap-start"
     >
       <motion.div
-        layoutId={sharedId}
         onClick={open}
         {...tiltCard}
         className={`depth-frame relative overflow-hidden rounded-xl border bg-surface shadow-card transition-colors duration-300 ${

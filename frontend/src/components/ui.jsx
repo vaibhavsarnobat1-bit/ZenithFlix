@@ -77,43 +77,25 @@ export function PosterFallback({ label }) {
 /** Image that swaps itself out for a graceful fallback when TMDB 404s a path. */
 export function SmartImage({ src, alt, className = '', fallbackLabel, imgClassName = '', loading = 'eager' }) {
   const [failed, setFailed] = useState(!src);
-  const [loaded, setLoaded] = useState(false);
-  const imgRef = useRef(null);
 
   useEffect(() => {
     setFailed(!src);
-    if (!src) {
-      setLoaded(false);
-      return;
-    }
-    if (imgRef.current && imgRef.current.complete && imgRef.current.naturalWidth > 0) {
-      setLoaded(true);
-    }
   }, [src]);
 
   return (
     <div className={`relative overflow-hidden bg-surfaceHigh ${className}`}>
-      {!failed && (
+      {!failed && src ? (
         <img
-          ref={(node) => {
-            imgRef.current = node;
-            if (node && node.complete && node.naturalWidth > 0 && !loaded) {
-              setLoaded(true);
-            }
-          }}
           src={src}
           alt={alt}
           loading={loading}
           decoding="async"
           onError={() => setFailed(true)}
-          onLoad={() => setLoaded(true)}
-          className={`h-full w-full object-cover transition-opacity duration-300 ${
-            loaded ? 'opacity-100' : 'opacity-0'
-          } ${imgClassName}`}
+          className={`h-full w-full object-cover ${imgClassName}`}
         />
+      ) : (
+        <PosterFallback label={fallbackLabel || alt} />
       )}
-      {!loaded && !failed && <div className="pointer-events-none absolute inset-0 shimmer" />}
-      {failed && <PosterFallback label={fallbackLabel || alt} />}
     </div>
   );
 }
