@@ -322,7 +322,7 @@ const PROVIDERS = [
     quality: '1080p',
     tier: 1,
     subs: true,
-    sandboxOk: false,
+    sandboxOk: true,
     patterns: {
       movie: 'https://nxsha.space/embed/movie/{tmdbId}',
       tv: 'https://nxsha.space/embed/tv/{tmdbId}/{season}/{episode}',
@@ -334,7 +334,7 @@ const PROVIDERS = [
     quality: '1080p',
     tier: 1,
     subs: true,
-    sandboxOk: false,
+    sandboxOk: true,
     patterns: {
       movie: 'https://nxsha.space/embed/movie/{tmdbId}?lang=hindi&autoplay=true',
       tv: 'https://nxsha.space/embed/tv/{tmdbId}/{season}/{episode}?lang=hindi&autoplay=true',
@@ -346,7 +346,7 @@ const PROVIDERS = [
     quality: '1080p',
     tier: 1,
     subs: true,
-    sandboxOk: false,
+    sandboxOk: true,
     patterns: {
       movie: 'https://nxsha.space/embed/movie/{tmdbId}?lang=hindi&autoplay=true&one_server=true&server=OrVid-[Multi-Lang]',
       tv: 'https://nxsha.space/embed/tv/{tmdbId}/{season}/{episode}?lang=hindi&autoplay=true&one_server=true&server=OrVid-[Multi-Lang]',
@@ -358,7 +358,7 @@ const PROVIDERS = [
     quality: '1080p',
     tier: 2,
     subs: true,
-    sandboxOk: false,
+    sandboxOk: true,
     patterns: {
       movie: 'https://nxsha.space/embed/movie/{tmdbId}?lang=tamil&autoplay=true',
       tv: 'https://nxsha.space/embed/tv/{tmdbId}/{season}/{episode}?lang=tamil&autoplay=true',
@@ -370,7 +370,7 @@ const PROVIDERS = [
     quality: '1080p',
     tier: 2,
     subs: true,
-    sandboxOk: false,
+    sandboxOk: true,
     patterns: {
       movie: 'https://nxsha.space/embed/movie/{tmdbId}?lang=telugu&autoplay=true',
       tv: 'https://nxsha.space/embed/tv/{tmdbId}/{season}/{episode}?lang=telugu&autoplay=true',

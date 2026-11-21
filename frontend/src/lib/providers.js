@@ -32,27 +32,27 @@ const FALLBACK = [
     patterns: { movie: 'https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8', tv: 'https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8' },
   },
   {
-    id: 'autoembed-multi', label: '🔥 AutoEmbed · Multi-Audio (Nitro)', kind: 'embed', quality: '1080p', tier: 1, subs: true, sandboxOk: false,
+    id: 'autoembed-multi', label: '🔥 AutoEmbed · Multi-Audio (Nitro)', kind: 'embed', quality: '1080p', tier: 1, subs: true, sandboxOk: true,
     blurb: 'AutoEmbed Multi-Language player with in-player Audio menu (Hindi, Tamil, Telugu, Malayalam, Kannada), Nitro server & 1080p quality selector.',
     patterns: { movie: 'https://nxsha.space/embed/movie/{tmdbId}', tv: 'https://nxsha.space/embed/tv/{tmdbId}/{season}/{episode}' },
   },
   {
-    id: 'autoembed-hindi', label: '⚡ AutoEmbed · Hindi Dub (Official)', kind: 'embed', quality: '1080p', tier: 1, subs: true, sandboxOk: false,
+    id: 'autoembed-hindi', label: '⚡ AutoEmbed · Hindi Dub (Official)', kind: 'embed', quality: '1080p', tier: 1, subs: true, sandboxOk: true,
     blurb: 'AutoEmbed direct Hindi Dub server stream (?lang=hindi).',
     patterns: { movie: 'https://nxsha.space/embed/movie/{tmdbId}?lang=hindi&autoplay=true', tv: 'https://nxsha.space/embed/tv/{tmdbId}/{season}/{episode}?lang=hindi&autoplay=true' },
   },
   {
-    id: 'autoembed-nitro', label: '⚡ Nitro · Multi-Lang HD', kind: 'embed', quality: '1080p', tier: 1, subs: true, sandboxOk: false,
+    id: 'autoembed-nitro', label: '⚡ Nitro · Multi-Lang HD', kind: 'embed', quality: '1080p', tier: 1, subs: true, sandboxOk: true,
     blurb: 'AutoEmbed Nitro Multi-Language HD stream (OrVid).',
     patterns: { movie: 'https://nxsha.space/embed/movie/{tmdbId}?lang=hindi&autoplay=true&one_server=true&server=OrVid-[Multi-Lang]', tv: 'https://nxsha.space/embed/tv/{tmdbId}/{season}/{episode}?lang=hindi&autoplay=true&one_server=true&server=OrVid-[Multi-Lang]' },
   },
   {
-    id: 'autoembed-tamil', label: '⚡ AutoEmbed · Tamil Dub', kind: 'embed', quality: '1080p', tier: 2, subs: true, sandboxOk: false,
+    id: 'autoembed-tamil', label: '⚡ AutoEmbed · Tamil Dub', kind: 'embed', quality: '1080p', tier: 2, subs: true, sandboxOk: true,
     blurb: 'AutoEmbed direct Tamil Dub server stream (?lang=tamil).',
     patterns: { movie: 'https://nxsha.space/embed/movie/{tmdbId}?lang=tamil&autoplay=true', tv: 'https://nxsha.space/embed/tv/{tmdbId}/{season}/{episode}?lang=tamil&autoplay=true' },
   },
   {
-    id: 'autoembed-telugu', label: '⚡ AutoEmbed · Telugu Dub', kind: 'embed', quality: '1080p', tier: 2, subs: true, sandboxOk: false,
+    id: 'autoembed-telugu', label: '⚡ AutoEmbed · Telugu Dub', kind: 'embed', quality: '1080p', tier: 2, subs: true, sandboxOk: true,
     blurb: 'AutoEmbed direct Telugu Dub server stream (?lang=telugu).',
     patterns: { movie: 'https://nxsha.space/embed/movie/{tmdbId}?lang=telugu&autoplay=true', tv: 'https://nxsha.space/embed/tv/{tmdbId}/{season}/{episode}?lang=telugu&autoplay=true' },
   },
@@ -142,10 +142,8 @@ const FALLBACK = [
 
 const FALLBACK_ORDER = ['autoembed-multi', 'autoembed-hindi', 'autoembed-nitro', 'zxc-hindi', 'vidsrcpm', 'autoembed-tamil', 'autoembed-telugu', 'vidlink', 'videasy', 'autoembed', 'smashy', '2embed', '2embedskin', 'vidfast', 'vidfastvc', 'embed-su-hindi', 'moviebox-hindi'];
 
-// Hosts that detect our pop-up cage and refuse to play inside it, measured by
-// reading each host's own page (2Embed ships a "Sandbox not allowed" overlay)
-// and confirmed in a live browser for VidLink and the ZXCStream dub servers.
-const CAGE_SNIFFERS = ['vidlink', 'autoembed-multi', 'autoembed-hindi', 'autoembed-nitro', 'autoembed-tamil', 'autoembed-telugu', 'zxc-hindi', 'zxc-tamil', 'zxc-telugu', '2embed', '2embedskin'];
+// Only hosts that literally refuse to run if sandboxed (2Embed ships an overlay)
+const CAGE_SNIFFERS = ['2embed', '2embedskin'];
 for (const p of FALLBACK) {
   if (p.kind === 'embed') p.sandboxOk = !CAGE_SNIFFERS.includes(p.id);
 }

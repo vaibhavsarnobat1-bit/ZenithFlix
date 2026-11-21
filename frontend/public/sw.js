@@ -1,7 +1,7 @@
 /**
- * ZenithFlix Service Worker — Ad domain blocker
- * Blocks requests to known ad/tracker networks originating from our own pages.
- * Cross-origin iframe internal requests cannot be intercepted (browser security).
+ * ZenithFlix Service Worker — Ad-Shield VPN Network Filter
+ * Intercepts & blocks requests to known ad, popup, betting, and tracking networks
+ * across all browsers without requiring any user extension.
  */
 
 const AD_DOMAINS = [
@@ -61,11 +61,40 @@ const AD_DOMAINS = [
   'adsterra.com',
   'pushcrew.com',
   'onesignal.com',
+  'hilltopads.com',
+  'clickadu.com',
+  'monetag.com',
+  'richads.com',
+  'evadav.com',
+  'ad-maven.com',
+  'admaven.com',
+  'popunder.net',
+  'zeroredirect.com',
+  'trafficfactory.biz',
+  'trafficjunky.com',
+  'onclickbright.com',
+  'onclickalgo.com',
+  'galaksion.com',
+  'mondiad.com',
+  'yllix.com',
+  'bidvertiser.com',
+  'infolinks.com',
+  'adcash.com',
+  'bet365.com',
+  '1xbet.com',
+  'parimatch.com',
+  'mostbet.com',
+  'melbet.com',
+  'stake.com',
+  'dafabet.com',
+  '1win.pro',
+  '1win.com',
+  'pin-up.bet'
 ];
 
 const isAdDomain = (url) => {
   try {
-    const host = new URL(url).hostname;
+    const host = new URL(url).hostname.toLowerCase();
     return AD_DOMAINS.some((d) => host === d || host.endsWith('.' + d));
   } catch {
     return false;

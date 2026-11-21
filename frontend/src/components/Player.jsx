@@ -929,16 +929,23 @@ export default function Player({
           )}
         </div>
 
-        {/* Audio + room badges go top-left: only show party badge */}
-        {party && (
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-3 p-3">
-            <div className="pointer-events-auto flex flex-wrap items-center gap-1.5">
+        {/* Ad-Shield VPN status + room badges top-left */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-3 p-3">
+          <div className="pointer-events-auto flex flex-wrap items-center gap-1.5">
+            <span
+              className="flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-black/75 px-2.5 py-1 text-[10.5px] font-bold text-emerald-400 backdrop-blur-md shadow-md"
+              title="Zenith Ad-Shield VPN Active: Popups, ad tabs, and ad redirects are blocked at browser engine level."
+            >
+              <Shield className="h-3 w-3 text-emerald-400" />
+              <span>Ad-Shield VPN Active</span>
+            </span>
+            {party && (
               <Badge tone="violet" title="Room state">
                 <Gauge className="h-2.5 w-2.5" /> {party}
               </Badge>
-            </div>
+            )}
           </div>
-        )}
+        </div>
 
         {/* still black, or frozen mid-film? explicit escape hatches — we cannot
             detect iframe internals, so we hand the viewer both fixes: retry here

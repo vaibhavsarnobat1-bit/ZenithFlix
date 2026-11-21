@@ -20,24 +20,33 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Anti-popup guard: intercept unwanted ad tabs/popunders spawned by third-party embed scripts
+// Zenith Ad-Shield VPN Engine: Intercept and eliminate unwanted popup ads, tabs & redirects
 try {
   const originalOpen = window.open;
   window.open = function (url, target, features) {
     if (url && typeof url === 'string') {
       try {
         const parsed = new URL(url, window.location.href);
-        // Only allow opening same-origin links or explicitly allowed video providers
+        // Strictly allow only same-origin navigations or explicitly trusted internal paths
         if (parsed.origin !== window.location.origin) {
-          console.warn('[AdBlock] Blocked third-party popup ad to:', url);
+          console.warn('[Ad-Shield VPN] Blocked third-party ad popup to:', url);
           return null;
         }
       } catch {
         return null;
       }
     }
-    return originalOpen ? originalOpen.call(window, url, target, features) : null;
+    return null;
   };
+
+  // Anti-popunder trick: if a background script attempts to steal window focus to spawn an ad
+  window.addEventListener('blur', () => {
+    setTimeout(() => {
+      if (document.activeElement?.tagName === 'IFRAME') {
+        window.focus();
+      }
+    }, 150);
+  });
 } catch {
   // Ignore in restricted environments
 }
