@@ -130,6 +130,31 @@ export default function Player({
   const autoPicked = useRef(Boolean(provider) || Boolean(preferredServer()));
   const [hlsAudioState, setHlsAudioState] = useState(null);
   const [hlsQualityState, setHlsQualityState] = useState(null);
+  const [showCornerControls, setShowCornerControls] = useState(true);
+  const cornerTimerRef = useRef(null);
+
+  // Auto-hide corner controls when movie starts/is ready
+  useEffect(() => {
+    if (ready) {
+      if (cornerTimerRef.current) clearTimeout(cornerTimerRef.current);
+      cornerTimerRef.current = setTimeout(() => {
+        setShowCornerControls(false);
+      }, 2500);
+    } else {
+      setShowCornerControls(true);
+    }
+    return () => {
+      if (cornerTimerRef.current) clearTimeout(cornerTimerRef.current);
+    };
+  }, [ready, frameKey]);
+
+  const wakeCornerControls = useCallback(() => {
+    setShowCornerControls(true);
+    if (cornerTimerRef.current) clearTimeout(cornerTimerRef.current);
+    cornerTimerRef.current = setTimeout(() => {
+      setShowCornerControls(false);
+    }, 3000);
+  }, []);
 
   /* Server preferences survive reload; active audio/quality cannot be persisted. */
   const setQuality = (q) => {
@@ -721,6 +746,22 @@ export default function Player({
                 <SkipForward className="h-3.5 w-3.5" />
               </button>
             )}
+            {!follow && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setTheater((v) => !v); }}
+                title={theater ? 'Exit Theater mode (T)' : 'Theater mode (T)'}
+                className={`grid h-7 w-7 place-items-center rounded-lg border transition-colors ${theater ? 'border-primary/45 bg-primary/25 text-white' : 'border-white/12 text-textSub hover:border-primary/40 hover:text-white'}`}
+              >
+                {theater ? <Minimize className="h-3.5 w-3.5" /> : <Expand className="h-3.5 w-3.5" />}
+              </button>
+            )}
+            <button
+              onClick={(e) => { e.stopPropagation(); toggleFullscreen(); }}
+              title={fullscreen ? 'Exit Fullscreen (F)' : 'Fullscreen (F)'}
+              className={`grid h-7 w-7 place-items-center rounded-lg border transition-colors ${fullscreen ? 'border-primary/45 bg-primary/25 text-white' : 'border-white/12 text-textSub hover:border-primary/40 hover:text-white'}`}
+            >
+              {fullscreen ? <Minimize className="h-3.5 w-3.5" /> : <Maximize className="h-3.5 w-3.5" />}
+            </button>
           </div>
         </div>
 
@@ -943,9 +984,18 @@ export default function Player({
 
 
 
-        {/* Player controls: pinned top-right INSIDE the fullscreen container so
-            they stay visible in fullscreen. z-40 keeps them above the iframe. */}
-        <div className="absolute right-2 bottom-2 z-40 flex items-center gap-1">
+        {/* Player controls: pinned bottom-right INSIDE the fullscreen container.
+            Auto-hides cleanly when movie starts, reveals on hover or touch */}
+        <div
+          onMouseEnter={wakeCornerControls}
+          onMouseMove={wakeCornerControls}
+          onTouchStart={wakeCornerControls}
+          className={`absolute right-2 bottom-2 z-40 flex items-center gap-1 p-1 rounded-xl transition-all duration-300 ${
+            showCornerControls
+              ? 'opacity-100 pointer-events-auto'
+              : 'opacity-0 pointer-events-none hover:opacity-100 hover:pointer-events-auto'
+          }`}
+        >
           {!follow && (
             <button
               onClick={(e) => { e.stopPropagation(); setPanel(true); }}
