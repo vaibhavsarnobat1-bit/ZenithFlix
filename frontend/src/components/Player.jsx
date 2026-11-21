@@ -695,6 +695,18 @@ export default function Player({
           )}
 
           <div className="ml-auto flex items-center gap-1.5">
+            <span
+              className="flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10.5px] font-bold text-emerald-400"
+              title="Zenith Ad-Shield VPN Active: Popups and ad redirects blocked"
+            >
+              <Shield className="h-3 w-3 text-emerald-400" />
+              <span>Ad-Shield VPN</span>
+            </span>
+            {party && (
+              <Badge tone="violet" title="Room state">
+                <Gauge className="h-2.5 w-2.5" /> {party}
+              </Badge>
+            )}
             {active?.subs && <Badge tone="cyan">Subs</Badge>}
             <Badge tone="muted" title="Use in-player ⚙️ menu for stream audio / dubs">
               <Volume2 className="h-2.5 w-2.5" /> Audio in Player Menu
@@ -929,70 +941,7 @@ export default function Player({
           )}
         </div>
 
-        {/* Ad-Shield VPN status + room badges top-left */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-3 p-3">
-          <div className="pointer-events-auto flex flex-wrap items-center gap-1.5">
-            <span
-              className="flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-black/75 px-2.5 py-1 text-[10.5px] font-bold text-emerald-400 backdrop-blur-md shadow-md"
-              title="Zenith Ad-Shield VPN Active: Popups, ad tabs, and ad redirects are blocked at browser engine level."
-            >
-              <Shield className="h-3 w-3 text-emerald-400" />
-              <span>Ad-Shield VPN Active</span>
-            </span>
-            {party && (
-              <Badge tone="violet" title="Room state">
-                <Gauge className="h-2.5 w-2.5" /> {party}
-              </Badge>
-            )}
-          </div>
-        </div>
 
-        {/* still black, or frozen mid-film? explicit escape hatches — we cannot
-            detect iframe internals, so we hand the viewer both fixes: retry here
-            and move on to the next server */}
-        <AnimatePresence>
-          {ready && !follow && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="absolute right-3 top-3 z-30 flex items-center gap-1.5"
-            >
-              <button
-                onClick={reloadFrame}
-                title="Reload this server without losing it — use this when the video sits paused and its own play button does nothing"
-                className="grid h-7 w-7 place-items-center rounded-lg border border-white/15 bg-black/60 text-white/80 backdrop-blur-md transition-colors hover:border-primary/45 hover:text-white"
-              >
-                <RefreshCw className="h-3 w-3" />
-              </button>
-              <button
-                onClick={switchServer}
-                title="We cannot see inside another site's player, so this is a manual override — it moves to the next server that answers, and stops with a straight answer once every one has been tried"
-                className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-bold backdrop-blur-md transition-colors ${
-                  nudge ? 'animate-nudge-glow border-primary/60 bg-primary/25 text-white' : 'border-white/15 bg-black/60 text-white/80 hover:border-primary/45 hover:text-white'
-                }`}
-              >
-                <SkipForward className="h-3 w-3" /> {nudge ? 'Try another server' : 'Switch server'}
-              </button>
-              {/* We cannot read the frame, so when a caged server goes quiet the
-                  only honest next step is to offer the one thing we can change
-                  from here: the cage itself. */}
-              {nudge && cage && (
-                <button
-                  onClick={() => {
-                    cageTried.current = true;
-                    setCageOff(true);
-                    setFrameKey((k) => k + 1);
-                  }}
-                  title="Some hosts refuse to play inside a sandboxed frame. Retry this server uncaged — it can open ad tabs again, so close any that appear."
-                  className="flex items-center gap-1.5 rounded-lg border border-gold/50 bg-gold/20 px-2.5 py-1.5 text-[11px] font-bold text-white backdrop-blur-md transition-colors hover:bg-gold/30"
-                >
-                  <ShieldOff className="h-3 w-3" /> Uncage &amp; retry
-                </button>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* Player controls: pinned top-right INSIDE the fullscreen container so
             they stay visible in fullscreen. z-40 keeps them above the iframe. */}
