@@ -78,30 +78,32 @@ export default function SearchPage() {
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Search 100,000+ films and series by title, anime, k-drama…"
-            className="w-full rounded-2xl border border-white/12 bg-white/[0.04] py-4 pl-12 pr-24 font-display text-[15px] font-semibold text-white placeholder:text-textMuted/70 transition-all duration-300 focus:border-primary/50 focus:bg-black/45"
+            className="w-full rounded-2xl border border-white/12 bg-white/[0.04] py-4 pl-12 pr-36 font-display text-[15px] font-semibold text-white placeholder:text-textMuted/70 transition-all duration-300 focus:border-primary/50 focus:bg-black/45"
           />
-          {draft && (
+          <div className="absolute right-2.5 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
+            {draft && (
+              <motion.button
+                type="button"
+                onClick={() => { setDraft(''); submit(''); }}
+                whileHover={{ scale: 1.15 }}
+                whileTap={{ scale: 0.85 }}
+                transition={spring.pop}
+                className="grid h-8 w-8 place-items-center rounded-lg text-textMuted transition-colors hover:bg-white/10 hover:text-white"
+                aria-label="Clear"
+              >
+                <X className="h-4 w-4" />
+              </motion.button>
+            )}
             <motion.button
-              type="button"
-              onClick={() => { setDraft(''); submit(''); }}
-              whileHover={{ scale: 1.2, rotate: 90 }}
-              whileTap={{ scale: 0.8 }}
-              transition={spring.pop}
-              className="absolute right-16 top-1/2 -translate-y-1/2 text-textMuted hover:text-white" aria-label="Clear"
+              type="submit"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.95 }}
+              transition={spring.snappy}
+              className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 font-display text-[13px] font-bold text-white shadow-md transition-colors hover:bg-primaryLight"
             >
-              <X className="h-4 w-4" />
+              Search
             </motion.button>
-          )}
-          <motion.button
-            type="submit"
-            whileHover={{ y: -2, scale: 1.04, z: 20 }}
-            whileTap={{ y: 2, scale: 0.9, z: 0, rotateX: 12 }}
-            transition={spring.snappy}
-            style={{ transformPerspective: 500 }}
-            className="btn-3d btn-3d-ember absolute right-2 top-1/2 -translate-y-1/2 rounded-xl bg-primary px-4 py-2 text-[13px] font-bold text-white hover:bg-primaryLight"
-          >
-            Search
-          </motion.button>
+          </div>
         </form>
 
         {!q && (

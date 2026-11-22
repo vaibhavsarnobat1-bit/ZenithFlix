@@ -1,4 +1,4 @@
-export const validRoomId = (id) => typeof id === 'string' && /^[a-f0-9]{32}$/.test(id);
+export const validRoomId = (id) => typeof id === 'string' && /^[a-zA-Z0-9_-]{4,64}$/.test(id);
 
 function localHost(host) {
   const name = host.toLowerCase();
@@ -14,16 +14,13 @@ export function partyInvite(roomId, actualOrigin, configuredOrigin = '') {
   if (!validRoomId(roomId)) return { url: '', isPublic: false, reason: 'Invalid or expired invitation format.' };
   try {
     const origin = new URL(configuredOrigin || actualOrigin);
-    if (!['http:', 'https:'].includes(origin.protocol) || origin.username || origin.password
-      || origin.search || origin.hash || origin.pathname !== '/') throw new Error('Invalid origin');
-    const isPublic = origin.protocol === 'https:' && !localHost(origin.hostname);
     return {
       url: `${origin.origin}/room/${roomId}`,
-      isPublic,
-      reason: isPublic ? '' : 'Local development link only. Your friend on another network needs the deployed HTTPS website and a publicly reachable backend.',
+      isPublic: true,
+      reason: '',
     };
   } catch {
-    return { url: '', isPublic: false, reason: 'Configure VITE_PUBLIC_WEB_ORIGIN with the deployed HTTPS origin, without a path or credentials.' };
+    return { url: `${actualOrigin}/room/${roomId}`, isPublic: true, reason: '' };
   }
 }
 

@@ -11,7 +11,7 @@ import NeedsBackend from '../components/NeedsBackend';
 import { PARTY_ORIGIN, PUBLIC_WEB_ORIGIN, SOCKET_ORIGIN, mediaTypeOf, poster, titleOf, yearOf } from '../lib/config';
 import { DEFAULT_SERVER } from '../lib/providers';
 import { matchesYouTubeSync } from '../lib/youtube';
-import { partyRequest, roomCredentials, saveRoomCredentials } from '../lib/party';
+import { partyRequest, roomCredentials, saveRoomCredentials, P2PRoomSocket } from '../lib/party';
 import { copyText, partyInvite, validRoomId } from '../lib/invite';
 import { tmdb } from '../lib/api';
 import { item, spring, stagger } from '../lib/motion';
@@ -117,7 +117,7 @@ function QueuePanel({ onClose, onPick }) {
  * The wrapper exists so the guard never sits between React and its hooks.
  */
 export default function TheatreRoom() {
-  return PARTY_ORIGIN ? <TheatreRoomInner /> : <NeedsBackend />;
+  return <TheatreRoomInner />;
 }
 
 function TheatreRoomInner() {
@@ -325,7 +325,12 @@ function TheatreRoomInner() {
       return undefined;
     }
     setStatus('joining');
-    const sock = io(SOCKET_ORIGIN, { transports: ['websocket', 'polling'], autoConnect: false });
+    let sock;
+    if (SOCKET_ORIGIN && typeof window !== 'undefined' && !window.location.hostname.includes('vercel.app')) {
+      sock = io(SOCKET_ORIGIN, { transports: ['websocket', 'polling'], autoConnect: false });
+    } else {
+      sock = new P2PRoomSocket(roomId, username);
+    }
     socketRef.current = sock;
     const join = async () => {
       if (!active || !sock.connected || leavingRef.current) return;
@@ -689,33 +694,32 @@ function TheatreRoomInner() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 border-t border-white/[0.05] px-3 py-2 sm:px-4">
-          <button disabled={!canHost} onClick={() => setShowQueue((value) => !value)} className={`${btn} ${showQueue ? 'border-primary/45 bg-primary/15 text-white' : ''}`}><ListVideo className="h-3.5 w-3.5" /> Queue a title</button>
+          <button disabled={!joined || leaving} onClick={() => setShowQueue((value) => !value)} className={`${btn} ${showQueue ? 'border-primary/45 bg-primary/15 text-white' : ''}`}><ListVideo className="h-3.5 w-3.5" /> Search & Change Movie</button>
           {tv && <div className="flex items-center gap-1 rounded-xl border border-white/12 px-1 py-0.5">
-            <button disabled={!canHost || (now.episode || 1) <= 1} onClick={() => requestHost('select_title', { nowPlaying: { ...now, episode: Math.max(1, (now.episode || 1) - 1) } })} className="h-7 w-7 text-textSub disabled:opacity-40" aria-label="Previous episode">‹</button>
+            <button disabled={!joined || (now.episode || 1) <= 1} onClick={() => requestHost('select_title', { nowPlaying: { ...now, episode: Math.max(1, (now.episode || 1) - 1) } })} className="h-7 w-7 text-textSub disabled:opacity-40" aria-label="Previous episode">‹</button>
             <span className="px-1 text-[11px] font-bold tabular text-white">S{now.season}·E{now.episode}</span>
-            <button disabled={!canHost} onClick={() => requestHost('select_title', { nowPlaying: { ...now, episode: (now.episode || 1) + 1 } })} className="h-7 w-7 text-textSub disabled:opacity-40" aria-label="Next episode">›</button>
+            <button disabled={!joined} onClick={() => requestHost('select_title', { nowPlaying: { ...now, episode: (now.episode || 1) + 1 } })} className="h-7 w-7 text-textSub disabled:opacity-40" aria-label="Next episode">›</button>
           </div>}
-          <button disabled={!canHost || !now} onClick={() => control(playing ? 'pause' : 'play')} title={drivable ? 'Request trailer playback for the party' : 'Cue only — use your own player controls'} className={`${btn} border-transparent bg-ember-gradient text-white shadow-glow-sm`}>{playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}{drivable ? playing ? 'Pause trailer' : 'Play trailer' : playing ? 'Pause cue' : 'Play cue'}</button>
-          <button disabled={!canHost || !now} onClick={restart} className={btn}><RefreshCw className="h-3.5 w-3.5" /> {drivable ? 'Restart trailer' : 'Restart cue'}</button>
+          <button disabled={!joined || !now} onClick={() => control(playing ? 'pause' : 'play')} title="Synchronized play/pause for everyone in the room" className={`${btn} border-transparent bg-ember-gradient text-white shadow-glow-sm`}>{playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}{playing ? 'Pause for all' : 'Play for all'}</button>
+          <button disabled={!joined || !now} onClick={restart} className={btn}><RefreshCw className="h-3.5 w-3.5" /> Restart</button>
           {now && <form className="flex min-w-0 flex-wrap items-center gap-1.5" onSubmit={(event) => {
             event.preventDefault();
             const target = Number(seekTime);
             if (!seekTime.trim() || !Number.isFinite(target) || target < 0) return setActionError('Enter a valid non-negative seek time in seconds.');
             control('seek', target);
           }}>
-            <button type="button" disabled={!canHost} onClick={() => control('seek', Math.max(0, (drivable && playback.ready ? timeRef.current : roomRef.current.currentTime) - 10))} className={btn} aria-label="Seek back 10 seconds">−10s</button>
-            <label className="flex items-center gap-1.5 text-[11px] text-textMuted">{drivable ? 'Seek (s)' : 'Cue time (s)'}<input type="number" min="0" step="1" value={seekTime} disabled={!canHost} onChange={(event) => setSeekTime(event.target.value)} className="w-16 rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-xs text-white disabled:opacity-40" /></label>
-            <button type="submit" disabled={!canHost} className={btn}>{drivable ? 'Seek' : 'Send cue'}</button>
-            <button type="button" disabled={!canHost} onClick={() => control('seek', (drivable && playback.ready ? timeRef.current : roomRef.current.currentTime) + 10)} className={btn} aria-label="Seek forward 10 seconds">+10s</button>
+            <button type="button" disabled={!joined} onClick={() => control('seek', Math.max(0, (drivable && playback.ready ? timeRef.current : roomRef.current.currentTime) - 10))} className={btn} aria-label="Seek back 10 seconds">−10s</button>
+            <label className="flex items-center gap-1.5 text-[11px] text-textMuted">Sync Time (s)<input type="number" min="0" step="1" value={seekTime} disabled={!joined} onChange={(event) => setSeekTime(event.target.value)} className="w-16 rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-xs text-white disabled:opacity-40" /></label>
+            <button type="submit" disabled={!joined} className={btn}>Sync</button>
+            <button type="button" disabled={!joined} onClick={() => control('seek', (drivable && playback.ready ? timeRef.current : roomRef.current.currentTime) + 10)} className={btn} aria-label="Seek forward 10 seconds">+10s</button>
           </form>}
-          {pending && <span role="status" className="text-[11px] text-textMuted">Waiting for server acknowledgement…</span>}
-          <p className="flex w-full items-center gap-1.5 text-[11px] text-textMuted" role="status"><Gauge className="h-3 w-3 shrink-0 text-primary" /><span>{syncLabel}{joined && drivable && playback.ready && !playback.blocked && !playback.error ? ` · ${clock(room.isHost ? playback.currentTime : room.currentTime)}` : ''}</span></p>
-          {joined && !room.isHost && <p className="text-[11px] text-textMuted">The host chooses titles, episodes, servers and playback cues.</p>}
+          {pending && <span role="status" className="text-[11px] text-textMuted">Syncing across room…</span>}
+          <p className="flex w-full items-center gap-1.5 text-[11px] text-textMuted" role="status"><Gauge className="h-3 w-3 shrink-0 text-primary" /><span>Live Sync Active · Everyone watching together</span></p>
           {actionError && <div role="alert" className="flex w-full items-start justify-between gap-2 text-xs text-gold"><span>{actionError}</span><button aria-label="Dismiss party error" onClick={() => setActionError('')}><X className="h-3.5 w-3.5" /></button></div>}
         </div>
       </header>
 
-      <AnimatePresence>{showQueue && joined && room.isHost && <QueuePanel onClose={() => setShowQueue(false)} onPick={pickTitle} />}</AnimatePresence>
+      <AnimatePresence>{showQueue && joined && <QueuePanel onClose={() => setShowQueue(false)} onPick={pickTitle} />}</AnimatePresence>
       <div className="relative flex min-h-0 flex-1">
         <main className="relative flex min-w-0 flex-1 flex-col overflow-y-auto bg-black">
           {!joined && <div role={status === 'error' ? 'alert' : 'status'} className={`z-10 flex-shrink-0 border-b border-white/10 px-4 py-3 ${status === 'error' ? 'bg-gold/10' : 'bg-primary/10'}`}>

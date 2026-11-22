@@ -155,9 +155,7 @@ function LibraryPicker({ picked, setPicked, season, setSeason, episode, setEpiso
  * explanation and the link flow that does work.
  */
 export default function GroupCreation() {
-  return PARTY_ORIGIN
-    ? <GroupCreationInner />
-    : <NeedsBackend heading="Live rooms need an always-on backend" />;
+  return <GroupCreationInner />;
 }
 
 function GroupCreationInner() {

@@ -183,9 +183,9 @@ export const streamDateLabel = (details) => {
 
 /**
  * Determine whether a title is a theatre CAM print or official HD (1080p/Web-DL).
- * Series are always streamed digitally (HD).
- * Movies released 25+ days ago or having digital circulation (votes >= 300) are Full HD.
- * Brand-new theatrical releases (under 25 days) show CAM, and automatically transition to HD as days pass.
+ * - Series are always streamed digitally (HD).
+ * - Movies released 18+ days ago or having digital circulation (votes >= 100) are Full HD.
+ * - Brand-new theatrical releases show CAM, and automatically transition to HD as soon as digital Web-DL arrives.
  */
 export const printQualityOf = (t) => {
   if (!t) return 'HD';
@@ -201,10 +201,10 @@ export const printQualityOf = (t) => {
   const now = Date.now();
   const diffDays = (now - relTime) / (1000 * 60 * 60 * 24);
 
-  // If movie is upcoming or in its first 25 days of theatre release with low vote count,
-  // it is in the theatrical CAM window.
+  // If movie is upcoming or in its first 18 days of theatre release with low vote count (<100),
+  // it is in the theatrical CAM window. Once digital release drops, it automatically shows HD.
   const votes = Number(t.vote_count) || 0;
-  if (diffDays < 25 && votes < 300) {
+  if (diffDays < 18 && votes < 100) {
     return 'CAM';
   }
   return 'HD';
