@@ -38,19 +38,21 @@ const DEFAULT_QUALITY = '1080';
 
 /** Dub shortcuts map to embed hosts that request the language via URL param. */
 const DUB_SERVER = {
-  hi: ['autoembed-hindi', 'autoembed-nitro', 'autoembed-multi', 'zxc-hindi', 'embed-su-hindi', 'moviebox-hindi'],
+  hi: ['hindi-vidsrc', 'hindi-superembed', 'hindi-filmku', 'hindi-smashystream', 'autoembed-hindi', 'autoembed-nitro', 'autoembed-multi', 'zxc-hindi', 'embed-su-hindi', 'moviebox-hindi'],
   ta: ['autoembed-tamil', 'autoembed-multi', 'zxc-tamil'],
   te: ['autoembed-telugu', 'autoembed-multi', 'zxc-telugu'],
   ml: ['autoembed-multi'],
   kn: ['autoembed-multi'],
+  en: ['vidsrcpm', 'vidlink', 'videasy', 'autoembed', 'smashy', '2embed', '2embedskin', 'vidfast', 'vidfastvc'],
 };
 const DUB_LANGS = [
-  { code: 'original', label: 'Original' },
   { code: 'hi', label: 'Hindi (हिन्दी)' },
+  { code: 'en', label: 'English' },
   { code: 'ta', label: 'Tamil (தமிழ்)' },
   { code: 'te', label: 'Telugu (తెలుగు)' },
   { code: 'ml', label: 'Malayalam (മലയാളം)' },
   { code: 'kn', label: 'Kannada (ಕನ್ನಡ)' },
+  { code: 'original', label: 'Original' },
 ];
 const SERVER_DUB = {};
 for (const [lang, ids] of Object.entries(DUB_SERVER)) {
@@ -629,6 +631,10 @@ export default function Player({
     else el.requestFullscreen?.();
   }, []);
 
+  const [selectedCategory, setSelectedCategory] = useState(() => {
+    return SERVER_DUB[provider || preferredServer() || DEFAULT_SERVER] || 'hi';
+  });
+
   const pick = (id) => {
     setServer(id);
     setTriedIds((t) => [...new Set([...t, id])]);
@@ -638,6 +644,7 @@ export default function Player({
 
   /** Map a dubbing choice to its embed host (Hindi/Tamil/Telugu) or back to the default source. */
   const selectDub = (code) => {
+    setSelectedCategory(code);
     if (code === 'original') {
       pick(findProvider(preferredServer()) ? preferredServer() : DEFAULT_SERVER);
     } else {
@@ -646,7 +653,7 @@ export default function Player({
       if (target) pick(target);
     }
   };
-  const currentDub = SERVER_DUB[server] || 'original';
+  const currentDub = SERVER_DUB[server] || selectedCategory || 'hi';
 
   /**
    * Reload the frame without changing server — the other escape hatch.
@@ -765,29 +772,61 @@ export default function Player({
           </div>
         </div>
 
-        {/* Quick Server Buttons with Direct 1-Click Access */}
+        {/* Dubbing shortcuts / Language Category Tabs */}
+        {!follow && (
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+            <span className="mr-1 flex shrink-0 items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-textMuted">
+              <Languages className="h-3 w-3 text-primary" /> Audio Language:
+            </span>
+            {DUB_LANGS.map((l) => {
+              const isSelected = selectedCategory === l.code || (l.code === 'original' && selectedCategory === 'original');
+              return (
+                <button
+                  key={l.code}
+                  type="button"
+                  onClick={() => selectDub(l.code)}
+                  aria-pressed={isSelected}
+                  title={`Show ${l.label} servers`}
+                  className={`shrink-0 rounded-lg border px-3 py-1 text-[11.5px] font-bold transition-all ${
+                    isSelected
+                      ? 'border-primary bg-primary text-white shadow-glow-sm'
+                      : 'border-white/10 bg-white/[0.04] text-textSub hover:border-white/25 hover:text-white'
+                  }`}
+                >
+                  {l.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Filtered Servers under selected language category */}
         {!follow && (
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
             <span className="text-[11px] font-bold uppercase tracking-wider text-textMuted shrink-0 mr-1 flex items-center gap-1">
-              <Server className="h-3 w-3 text-primary" /> Servers:
+              <Server className="h-3 w-3 text-secondary" /> {DUB_LANGS.find((l) => l.code === selectedCategory)?.label || 'Selected'} Servers:
             </span>
             {providers
               .filter((p) => p.kind === 'embed' || p.id === 'hls-direct')
+              .filter((p) => {
+                if (selectedCategory === 'original') return true;
+                const allowed = DUB_SERVER[selectedCategory];
+                if (allowed) return allowed.includes(p.id);
+                return true;
+              })
               .map((p) => {
                 const isCurrent = p.id === server;
                 const isMultiAudio = p.id === 'autoembed-multi' || p.id === 'hls-direct' || p.id === 'vidsrcpm' || p.id === 'smashy' || p.id === 'videasy';
-                // The cage state follows the provider that actually gets framed,
-                // resolved from the chip id rather than the chip itself.
                 const resolved = buildSource(p.id, { tmdbId, type, season, episode, youtubeKey }).provider;
                 const popsAds = blockPopups && resolved?.sandboxOk === false;
                 return (
                   <button
                     key={p.id}
                     onClick={() => pick(p.id)}
-                    title={popsAds ? `${p.blurb}\n\n⚠ This host detects the pop-up cage and refuses to play inside it, so its frame is uncaged — it can still open an ad tab.` : p.blurb}
+                    title={popsAds ? `${p.blurb}\n\n⚠ This host detects the pop-up cage and refuses to play inside it, so its frame is uncaged.` : p.blurb}
                     className={`shrink-0 flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11.5px] font-semibold transition-all ${
                       isCurrent
-                        ? 'border-primary bg-primary text-white shadow-sm'
+                        ? 'border-secondary bg-secondary/80 text-white shadow-sm ring-1 ring-secondary'
                         : 'border-white/10 bg-white/[0.03] text-textSub hover:border-white/25 hover:text-white hover:bg-white/[0.07]'
                     }`}
                   >
@@ -801,31 +840,6 @@ export default function Player({
                   </button>
                 );
               })}
-          </div>
-        )}
-
-        {/* Dubbing shortcuts — one-tap language switch that selects the matching dub host */}
-        {!follow && (
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-            <span className="mr-1 flex shrink-0 items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-textMuted">
-              <Languages className="h-3 w-3 text-primary" /> Dubbing:
-            </span>
-            {DUB_LANGS.map((l) => (
-              <button
-                key={l.code}
-                type="button"
-                onClick={() => selectDub(l.code)}
-                aria-pressed={currentDub === l.code}
-                title={l.code === 'original' ? 'Original audio (default server)' : `Switch to ${l.label} dub stream`}
-                className={`shrink-0 rounded-lg border px-3 py-1 text-[11.5px] font-bold transition-all ${
-                  currentDub === l.code
-                    ? 'border-secondary/60 bg-secondary/20 text-white shadow-sm'
-                    : 'border-white/10 bg-white/[0.03] text-textSub hover:border-white/25 hover:text-white'
-                }`}
-              >
-                {l.label}
-              </button>
-            ))}
           </div>
         )}
       </div>
