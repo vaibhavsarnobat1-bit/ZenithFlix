@@ -251,6 +251,7 @@ export class P2PRoomSocket {
     }
 
     if (msg.type === 'chat_message') {
+      this.emitLocal('receive_message', msg.payload);
       this.emitLocal('chat_message', msg.payload);
       return;
     }
@@ -270,6 +271,7 @@ export class P2PRoomSocket {
         timestamp: Date.now(),
       };
       this.broadcast({ type: 'chat_message', payload: chat });
+      this.emitLocal('receive_message', chat);
       this.emitLocal('chat_message', chat);
       return;
     }
