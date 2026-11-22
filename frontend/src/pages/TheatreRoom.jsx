@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft, Check, Copy, Crown, Gauge, ListVideo, MessageSquare, Monitor, Pause, Play,
+  ArrowLeft, Check, Copy, Crown, Gauge, Link as LinkIcon, ListVideo, MessageSquare, Monitor, Pause, Play,
   RefreshCw, Search, Send, Share2, Users, Wifi, X,
 } from 'lucide-react';
 import Player from '../components/Player';
@@ -216,7 +216,9 @@ function TheatreRoomInner() {
     const next = {
       name: state.name || 'Theatre Room',
       hostId: state.hostId ?? null,
-      isHost: state.hostId ? state.hostId === socketRef.current?.id : Boolean(state.isHost),
+      isHost: socketRef.current?.isP2P
+        ? Boolean(socketRef.current?.isHost ?? state.isHost)
+        : (state.hostId ? state.hostId === socketRef.current?.id : Boolean(state.isHost)),
       users: Array.isArray(state.users) ? state.users : [],
       nowPlaying: state.nowPlaying || null,
       currentTime: seconds(state.currentTime),
@@ -486,7 +488,9 @@ function TheatreRoomInner() {
 
   const requestHost = useCallback(async (event, payload) => {
     const sock = socketRef.current;
-    if (!joinedRef.current || !sock?.connected || !isHostRef.current || leavingRef.current) {
+    // In P2P mode: anyone joined can send host commands (the room is P2P, host state is local)
+    const isP2P = sock?.isP2P === true;
+    if (!joinedRef.current || !sock?.connected || (!isHostRef.current && !isP2P) || leavingRef.current) {
       setActionError('Only the joined, connected host can change the party.');
       return null;
     }
@@ -500,7 +504,7 @@ function TheatreRoomInner() {
     if (request.sourceChange) resetTelemetry();
     try {
       const result = await partyRequest(sock, event, { ...payload, roomId });
-      if (socketRef.current !== sock || !sock.connected || !joinedRef.current || !isHostRef.current || attempt !== joinAttemptRef.current || leavingRef.current) return null;
+      if (socketRef.current !== sock || !sock.connected || !joinedRef.current || (!isHostRef.current && !sock.isP2P) || attempt !== joinAttemptRef.current || leavingRef.current) return null;
       if (result.state) applySnapshot(result.state);
       else if (result.control) applyControl(result.control);
       else if (stateVersionRef.current === version) {
@@ -684,12 +688,28 @@ function TheatreRoomInner() {
           </div>
         </div>
 
-        {/* A separate, labelled invite row remains visible on narrow screens. */}
+        {/* Compact invite row: single icon button + participants badge */}
         <div className="flex flex-wrap items-center gap-2 border-t border-white/[0.05] px-3 py-2 sm:px-4">
-          <button onClick={copyInvite} disabled={!invite.url} className={`${btn} border-primary/45 bg-primary/15 text-white`}><span>{copied ? <Check className="h-3.5 w-3.5 text-lime" /> : <Copy className="h-3.5 w-3.5" />}</span>{copied ? 'Copied' : invite.isPublic ? 'Copy Invite Link' : 'Copy local link'}</button>
-          <button onClick={shareInvite} disabled={!invite.url} title={invite.isPublic ? 'Share the invite, or copy it if sharing is unavailable' : 'Copies the local link; public sharing is unavailable'} className={btn}><Share2 className="h-3.5 w-3.5" /> {invite.isPublic ? 'Share' : 'Share (copy local)'}</button>
-          <label className="flex min-w-0 basis-full items-center gap-2 sm:min-w-[220px] sm:basis-auto sm:flex-1"><span className="shrink-0 text-[11px] font-semibold text-textMuted">Invite link</span><input readOnly value={invite.url} onFocus={(event) => event.target.select()} className="min-w-0 flex-1 rounded-lg border border-white/10 bg-black/40 px-2.5 py-1.5 text-[11px] text-primary" /></label>
-          {!invite.isPublic && <p className="w-full break-words text-[11px] text-gold">{invite.url ? 'Local development link, not usable on another network. ' : ''}{invite.reason}</p>}
+          <button
+            onClick={copyInvite}
+            disabled={!invite.url}
+            title={copied ? 'Link copied!' : invite.isPublic ? 'Copy invite link' : 'Copy local invite link'}
+            className={`${btn} border-primary/45 bg-primary/15 text-white`}
+          >
+            {copied ? <Check className="h-3.5 w-3.5 text-lime" /> : <LinkIcon className="h-3.5 w-3.5" />}
+            {copied ? 'Copied!' : 'Invite'}
+          </button>
+          {navigator?.share && invite.isPublic && (
+            <button onClick={shareInvite} disabled={!invite.url} title="Share invite link" className={btn}>
+              <Share2 className="h-3.5 w-3.5" />
+              Share
+            </button>
+          )}
+          <span className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[12px] font-semibold text-textSub">
+            <Users className="h-3.5 w-3.5" />
+            {room.users.filter((u) => u.connected !== false).length} watching
+          </span>
+          {!invite.isPublic && invite.reason && <p className="w-full break-words text-[11px] text-gold">{invite.reason}</p>}
           {inviteError && <p role="alert" className="w-full text-xs text-gold">{inviteError}</p>}
         </div>
 

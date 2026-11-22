@@ -47,12 +47,13 @@ export function partyRequest(socket, event, payload) {
  */
 export async function createParty({ name, username = 'Host', nowPlaying }) {
   const roomId = generateRoomCode();
+  const hostId = 'host-' + Math.random().toString(36).slice(2, 8);
   const roomData = {
     roomId,
     name: name?.slice(0, 120) || 'ZenithFlix Room',
-    hostId: 'host-' + Math.random().toString(36).slice(2, 8),
+    hostId,
     isHost: true,
-    users: [{ id: 'host', username, isHost: true, connected: true }],
+    users: [{ id: hostId, username, isHost: true, connected: true }],
     nowPlaying: nowPlaying || null,
     currentTime: 0,
     isPlaying: true,
@@ -65,6 +66,7 @@ export async function createParty({ name, username = 'Host', nowPlaying }) {
     username,
     hostToken: 'host_' + roomId,
     resumeToken: 'resume_' + roomId,
+    hostId,
     roomData,
   });
 
@@ -84,10 +86,11 @@ export class P2PRoomSocket {
     this.handlers = new Map();
     this.connections = new Map();
     this.peer = null;
+    this.hostConn = null;
     this.bc = typeof window !== 'undefined' && 'BroadcastChannel' in window ? new BroadcastChannel(`zf-party-${roomId}`) : null;
     this.credentials = roomCredentials(roomId);
     this.isHost = Boolean(this.credentials?.isHost);
-    
+
     let initialRoom = this.credentials?.roomData;
     if (!initialRoom) {
       try {
@@ -95,12 +98,15 @@ export class P2PRoomSocket {
       } catch {}
     }
 
+    // Use saved hostId so member list shows crown correctly
+    const savedHostId = this.credentials?.hostId || (this.isHost ? 'host-local' : null);
+
     this.state = initialRoom || {
       roomId,
       name: 'Theatre Room',
-      hostId: this.isHost ? 'host' : null,
+      hostId: savedHostId,
       isHost: this.isHost,
-      users: [{ id: this.isHost ? 'host' : 'guest-' + Math.random().toString(36).slice(2, 6), username, isHost: this.isHost, connected: true }],
+      users: [{ id: savedHostId || ('guest-' + Math.random().toString(36).slice(2, 6)), username, isHost: this.isHost, connected: true }],
       nowPlaying: null,
       currentTime: 0,
       isPlaying: true,
@@ -120,6 +126,11 @@ export class P2PRoomSocket {
 
   off(event, handler) {
     this.handlers.get(event)?.delete(handler);
+  }
+
+  // Remove all listeners (called on cleanup)
+  removeAllListeners() {
+    this.handlers.clear();
   }
 
   emitLocal(event, ...args) {
@@ -154,6 +165,7 @@ export class P2PRoomSocket {
           conn.on('data', (data) => this.handleMessage(data, conn));
           conn.on('close', () => {
             this.connections.delete(conn.peer);
+            this.broadcastState();
           });
         });
         this.peer.on('error', (err) => {
@@ -182,6 +194,16 @@ export class P2PRoomSocket {
           conn.send({ type: 'join_room', username: this.username });
         });
         conn.on('data', (data) => this.handleMessage(data));
+        conn.on('close', () => {
+          // Try to reconnect after 2s
+          setTimeout(() => {
+            if (!this.connected) return;
+            this.connectAsGuest(hostPeerId);
+          }, 2000);
+        });
+      });
+      this.peer.on('error', (err) => {
+        console.warn('P2P guest peer error:', err.type);
       });
     } catch (e) {
       console.warn('Peer guest connect fallback', e);
@@ -194,7 +216,7 @@ export class P2PRoomSocket {
     }
     if (this.connections.size) {
       this.connections.forEach((conn) => {
-        try { conn.send(msg); } catch {}
+        try { if (conn.open) conn.send(msg); } catch {}
       });
     }
     if (this.hostConn && this.hostConn.open) {
@@ -203,18 +225,36 @@ export class P2PRoomSocket {
   }
 
   broadcastState() {
-    this.broadcast({ type: 'room_state', state: this.state });
+    const stateMsg = { type: 'room_state', state: this.state };
+    // Broadcast to peers
+    if (this.connections.size) {
+      this.connections.forEach((conn) => {
+        try { if (conn.open) conn.send(stateMsg); } catch {}
+      });
+    }
+    if (this.bc) {
+      try { this.bc.postMessage(stateMsg); } catch {}
+    }
+    // Apply locally
     this.emitLocal('room_state', this.state);
   }
 
   handleMessage(msg) {
     if (!msg || typeof msg !== 'object') return;
-    
+
     if (msg.type === 'join_room') {
       const existing = this.state.users.find((u) => u.username === msg.username);
       if (!existing) {
-        this.state.users.push({ id: 'u-' + Math.random().toString(36).slice(2, 6), username: msg.username, isHost: false, connected: true });
+        this.state.users.push({
+          id: 'u-' + Math.random().toString(36).slice(2, 6),
+          username: msg.username,
+          isHost: false,
+          connected: true,
+        });
+      } else {
+        existing.connected = true;
       }
+      this.state.updatedAt = Date.now();
       this.broadcastState();
       return;
     }
@@ -229,30 +269,40 @@ export class P2PRoomSocket {
       this.state.currentTime = msg.payload.currentTime;
       this.state.isPlaying = msg.payload.isPlaying;
       this.emitLocal('party_control', msg.payload);
-      if (this.isHost) this.broadcastState();
+      // Host re-broadcasts to all connected peers
+      if (this.isHost) this.broadcastToPeers({ type: 'party_control', payload: msg.payload });
       return;
     }
 
+    // ✅ KEY FIX: select_title → emit 'now_playing' (what TheatreRoom listens on)
     if (msg.type === 'select_title') {
-      this.state.nowPlaying = msg.payload.nowPlaying;
+      this.state.nowPlaying = msg.payload?.nowPlaying ?? msg.payload ?? null;
       this.state.currentTime = 0;
-      this.emitLocal('select_title', msg.payload);
-      if (this.isHost) this.broadcastState();
+      this.state.isPlaying = true;
+      this.state.updatedAt = Date.now();
+      // Emit as 'now_playing' — this is what TheatreRoom.jsx sock.on('now_playing', applyTitle) expects
+      this.emitLocal('now_playing', { nowPlaying: this.state.nowPlaying, currentTime: 0, isPlaying: true });
+      // Also update full room state
+      this.emitLocal('room_state', this.state);
+      if (this.isHost) this.broadcastToPeers(msg);
       return;
     }
 
+    // ✅ KEY FIX: change_source → emit 'source_changed' (what TheatreRoom listens on)
     if (msg.type === 'change_source') {
-      if (this.state.nowPlaying) {
-        this.state.nowPlaying.provider = msg.payload.provider;
+      if (this.state.nowPlaying && msg.payload?.provider) {
+        this.state.nowPlaying = { ...this.state.nowPlaying, provider: msg.payload.provider };
       }
-      this.emitLocal('change_source', msg.payload);
-      if (this.isHost) this.broadcastState();
+      this.state.updatedAt = Date.now();
+      // Emit as 'source_changed' — what TheatreRoom.jsx sock.on('source_changed', applySource) expects
+      this.emitLocal('source_changed', { ...msg.payload, nowPlaying: this.state.nowPlaying });
+      this.emitLocal('room_state', this.state);
+      if (this.isHost) this.broadcastToPeers(msg);
       return;
     }
 
     if (msg.type === 'chat_message') {
       this.emitLocal('receive_message', msg.payload);
-      this.emitLocal('chat_message', msg.payload);
       return;
     }
 
@@ -260,6 +310,13 @@ export class P2PRoomSocket {
       this.emitLocal('member_buffer', msg.payload);
       return;
     }
+  }
+
+  // Broadcast only to WebRTC peers (not BroadcastChannel, to avoid echo)
+  broadcastToPeers(msg) {
+    this.connections.forEach((conn) => {
+      try { if (conn.open) conn.send(msg); } catch {}
+    });
   }
 
   emit(event, payload) {
@@ -272,7 +329,6 @@ export class P2PRoomSocket {
       };
       this.broadcast({ type: 'chat_message', payload: chat });
       this.emitLocal('receive_message', chat);
-      this.emitLocal('chat_message', chat);
       return;
     }
 
@@ -284,18 +340,27 @@ export class P2PRoomSocket {
       return;
     }
 
+    // ✅ When we emit 'select_title', broadcast AND emit locally as 'now_playing'
     if (event === 'select_title') {
-      this.state.nowPlaying = payload.nowPlaying;
+      this.state.nowPlaying = payload?.nowPlaying ?? payload ?? null;
       this.state.currentTime = 0;
+      this.state.isPlaying = true;
+      this.state.updatedAt = Date.now();
       this.broadcast({ type: 'select_title', payload });
-      this.emitLocal('select_title', payload);
+      this.emitLocal('now_playing', { nowPlaying: this.state.nowPlaying, currentTime: 0, isPlaying: true });
+      this.emitLocal('room_state', this.state);
       return;
     }
 
+    // ✅ When we emit 'change_source', broadcast AND emit locally as 'source_changed'
     if (event === 'change_source') {
-      if (this.state.nowPlaying) this.state.nowPlaying.provider = payload.provider;
+      if (this.state.nowPlaying && payload?.provider) {
+        this.state.nowPlaying = { ...this.state.nowPlaying, provider: payload.provider };
+      }
+      this.state.updatedAt = Date.now();
       this.broadcast({ type: 'change_source', payload });
-      this.emitLocal('change_source', payload);
+      this.emitLocal('source_changed', { ...payload, nowPlaying: this.state.nowPlaying });
+      this.emitLocal('room_state', this.state);
       return;
     }
 
@@ -304,20 +369,45 @@ export class P2PRoomSocket {
       this.emitLocal('member_buffer', payload);
       return;
     }
+
+    // Passthrough for other events (sync_state, report_drift etc.) — no-op in P2P
   }
 
   request(event, payload) {
     return new Promise((resolve) => {
       if (event === 'join_room') {
         setTimeout(() => {
+          // Announce to others
           this.broadcast({ type: 'join_room', username: payload.username || this.username });
+          // Add self to users list if not already there
+          const me = this.state.users.find((u) => u.username === (payload.username || this.username));
+          if (!me) {
+            this.state.users.push({
+              id: 'guest-' + Math.random().toString(36).slice(2, 6),
+              username: payload.username || this.username,
+              isHost: this.isHost,
+              connected: true,
+            });
+          }
           resolve({ ok: true, state: this.state, resumeToken: 'p2p_resume' });
         }, 150);
         return;
       }
 
-      if (event === 'party_control' || event === 'select_title' || event === 'change_source') {
-        this.emit(event, payload);
+      if (event === 'select_title') {
+        this.emit('select_title', payload);
+        resolve({ ok: true, state: this.state });
+        return;
+      }
+
+      if (event === 'change_source') {
+        this.emit('change_source', payload);
+        resolve({ ok: true, state: this.state });
+        return;
+      }
+
+      if (event === 'party_control') {
+        this.emit('party_control', payload);
         resolve({ ok: true, state: this.state });
         return;
       }
