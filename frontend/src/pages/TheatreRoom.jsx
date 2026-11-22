@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft, Check, Copy, Crown, Gauge, Link as LinkIcon, ListVideo, MessageSquare, Monitor, Pause, Play,
+  ArrowLeft, Check, Copy, Crown, Gauge, Link2, ListVideo, MessageSquare, Monitor, Pause, Play,
   RefreshCw, Search, Send, Share2, Users, Wifi, X,
 } from 'lucide-react';
 import Player from '../components/Player';
@@ -696,7 +696,7 @@ function TheatreRoomInner() {
             title={copied ? 'Link copied!' : invite.isPublic ? 'Copy invite link' : 'Copy local invite link'}
             className={`${btn} border-primary/45 bg-primary/15 text-white`}
           >
-            {copied ? <Check className="h-3.5 w-3.5 text-lime" /> : <LinkIcon className="h-3.5 w-3.5" />}
+            {copied ? <Check className="h-3.5 w-3.5 text-lime" /> : <Link2 className="h-3.5 w-3.5" />}
             {copied ? 'Copied!' : 'Invite'}
           </button>
           {navigator?.share && invite.isPublic && (
