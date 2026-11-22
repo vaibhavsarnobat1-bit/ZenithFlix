@@ -140,7 +140,9 @@ function TheatreRoomInner() {
   const [leaving, setLeaving] = useState(false);
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');
-  const [showChat, setShowChat] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 640);
+  const [showChat, setShowChat] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [chatHovered, setChatHovered] = useState(false);
   const [tab, setTab] = useState('chat');
   const [showQueue, setShowQueue] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -617,6 +619,16 @@ function TheatreRoomInner() {
     window.addEventListener('keydown', escape);
     return () => window.removeEventListener('keydown', escape);
   }, [showChat]);
+  // Track browser fullscreen state
+  useEffect(() => {
+    const onFsChange = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', onFsChange);
+      document.removeEventListener('webkitfullscreenchange', onFsChange);
+    };
+  }, []);
   useEffect(() => () => clearTimeout(copyTimerRef.current), []);
   useEffect(() => {
     setLegacyPreview(false);
@@ -774,7 +786,18 @@ function TheatreRoomInner() {
                 </motion.div></div>}
         </main>
 
-        <AnimatePresence>{showChat && <motion.aside id="theatre-room-rail" aria-label="Room chat and participants" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 24 }} transition={spring.snappy} className="absolute inset-0 z-30 flex h-full w-full min-w-0 flex-col overflow-hidden border-l border-white/[0.07] bg-surface sm:static sm:w-[336px] sm:flex-shrink-0">
+        <AnimatePresence>{showChat && <motion.aside
+          id="theatre-room-rail"
+          aria-label="Room chat and participants"
+          onMouseEnter={() => setChatHovered(true)}
+          onMouseLeave={() => setChatHovered(false)}
+          initial={{ opacity: 0, x: 24 }}
+          animate={{ opacity: chatHovered ? 1 : 0.55, x: 0 }}
+          exit={{ opacity: 0, x: 24 }}
+          transition={spring.snappy}
+          className="pointer-events-auto fixed bottom-0 right-0 top-0 z-[9999] flex w-[280px] flex-col overflow-hidden border-l border-white/[0.08] bg-black/60 backdrop-blur-2xl sm:w-[300px]"
+          style={{ backdropFilter: 'blur(20px) saturate(1.4)' }}
+        >
           <div className="flex flex-shrink-0 gap-1 border-b border-white/[0.07] p-2">
             {[{ id: 'chat', icon: MessageSquare, label: `Chat ${messages.length ? `(${messages.length})` : ''}` }, { id: 'members', icon: Users, label: `Members (${room.users.length})` }].map((entry) => <button key={entry.id} onClick={() => setTab(entry.id)} aria-pressed={tab === entry.id} className={`relative min-w-0 flex-1 rounded-xl py-2 text-[11.5px] font-bold transition-colors ${tab === entry.id ? 'text-white' : 'text-textMuted hover:text-textSub'}`}>
               {tab === entry.id && <motion.span layoutId="room-rail" className="absolute inset-0 rounded-xl bg-ember-gradient opacity-85" transition={spring.pop} />}<span className="relative flex items-center justify-center gap-1.5"><entry.icon className="h-3.5 w-3.5" /> {entry.label}</span>
