@@ -11,7 +11,7 @@ import { spring, stagger } from '../lib/motion';
 import { Badge, Spinner, toast } from './ui';
 import PlaybackPanel from './PlaybackPanel';
 
-const STARTUP_BUDGET_MS = 13000;
+const STARTUP_BUDGET_MS = 6000;
 const YT_REASON = {
   2: 'the trailer id was malformed',
   5: 'the trailer is not playable in this player',
@@ -33,8 +33,8 @@ const SILENT_FRAME_BUDGET_MS = 14000;
 /** These are server-ranking preferences, never observed stream resolutions. */
 const QUALITY_SHORT = { '1080': 'Prefer HD servers', '4k': 'Prefer 4K servers' };
 
-/** Default preference for advertised HD servers; never a stream-quality claim. */
-const DEFAULT_QUALITY = '1080';
+/** Default preference: auto / adaptive for low-bandwidth data saving */
+const DEFAULT_QUALITY = 'auto';
 
 /** Dub shortcuts map to embed hosts that request the language via URL param. */
 const DUB_SERVER = {
