@@ -65,22 +65,19 @@ export default function SearchPage() {
             e.preventDefault();
             submit(draft);
           }}
-          className="search-3d scene relative rounded-2xl"
+          className="relative flex items-center rounded-2xl border border-white/12 bg-white/[0.04] transition-all duration-300 focus-within:border-primary/50 focus-within:bg-black/50 focus-within:shadow-[0_0_25px_rgba(255,46,85,0.25)]"
         >
-          <motion.span
-            className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-textMuted"
-            whileHover={{ rotateY: 360 }}
-          >
-            <Search className="h-4 w-4" />
-          </motion.span>
+          <span className="pointer-events-none pl-4 text-textMuted">
+            <Search className="h-5 w-5" />
+          </span>
           <input
             autoFocus
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Search 100,000+ films and series by title, anime, k-drama…"
-            className="w-full rounded-2xl border border-white/12 bg-white/[0.04] py-4 pl-12 pr-36 font-display text-[15px] font-semibold text-white placeholder:text-textMuted/70 transition-all duration-300 focus:border-primary/50 focus:bg-black/45"
+            className="w-full bg-transparent py-4 pl-3 pr-4 font-display text-[15px] font-semibold text-white placeholder:text-textMuted/70 outline-none"
           />
-          <div className="absolute right-2.5 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
+          <div className="flex items-center gap-2 pr-3 shrink-0">
             {draft && (
               <motion.button
                 type="button"
@@ -96,10 +93,10 @@ export default function SearchPage() {
             )}
             <motion.button
               type="submit"
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
               transition={spring.snappy}
-              className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 font-display text-[13px] font-bold text-white shadow-md transition-colors hover:bg-primaryLight"
+              className="flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 font-display text-[13px] font-bold text-white shadow-md transition-colors hover:bg-primaryLight"
             >
               Search
             </motion.button>
