@@ -94,7 +94,6 @@ export default function PlaybackPanel({
                 <div className="flex flex-col gap-1.5">
                   <div className="rounded-xl border border-lime/30 bg-lime/[0.08] px-3 py-2 text-[12px] text-lime">
                     Direct HLS stream active: {audioState.tracks.length} verified track(s) detected.
-                    {audioState.hasHindi ? ' (Hindi track is confirmed available)' : ' (Hindi track is NOT in this manifest)'}
                   </div>
                   <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
                     {audioState.tracks.map((t) => {
@@ -117,24 +116,7 @@ export default function PlaybackPanel({
                     })}
                   </div>
                 </div>
-              ) : (
-                <>
-                  <p role="status" className="rounded-xl border border-gold/20 bg-gold/[0.06] px-3 py-2.5 text-[12px] leading-relaxed text-gold">
-                    Current audio: unverified. Hindi availability: unknown, not confirmed missing. External language selection is not supported for this source.
-                  </p>
-                  <p className="px-1 text-[11px] leading-relaxed text-textMuted">
-                    A Hindi track must appear in the embedded player’s Audio menu to be selected there. Changing subtitles or adding a language to the URL does not create or select a dub.
-                  </p>
-                </>
-              )}
-              <div className="rounded-xl border border-white/[0.07] px-3 py-2.5 text-[11px] leading-relaxed text-textMuted">
-                <p className="font-bold text-textSub">Title languages — TMDB metadata only</p>
-                {!metadata ? <p>Loading title metadata…</p>
-                  : metadata.status !== 'loaded' ? <p>Title-language metadata is unavailable. Stream audio is still unknown.</p>
-                    : !metadata.languages?.length ? <p>No language metadata was supplied.</p>
-                      : <p>{metadata.languages.map((r) => `${languageName(r.code)}${r.original ? ' (original title language)' : ' (spoken in title)'}`).join(' · ')}</p>}
-                <p className="mt-1">These records are not the available tracks in this video source.</p>
-              </div>
+              ) : null}
             </Section>
             <Section icon={HardDrive} label="Video quality" note={qualityState.reason}>
               {qualityState?.status === 'supported' && qualityState.levels?.length ? (
@@ -173,14 +155,7 @@ export default function PlaybackPanel({
                     })}
                   </div>
                 </div>
-              ) : (
-                <>
-                  <p role="status" className="rounded-xl border border-gold/20 bg-gold/[0.06] px-3 py-2.5 text-[12px] leading-relaxed text-gold">
-                    Current resolution: unverified. No 480p / 720p / 1080p / Auto rendition selector is available from this iframe.
-                  </p>
-                  <p className="px-1 text-[11px] leading-relaxed text-textMuted">Use the embedded player’s Quality menu, if it provides one. We cannot confirm its resolutions or preserve its position through an external quality change.</p>
-                </>
-              )}
+              ) : null}
             </Section>
             <Section icon={Server} label="Select Server By Language" note="Choose your audio language to see its working servers:">
               <div className="mb-3 flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">

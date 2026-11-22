@@ -737,9 +737,6 @@ export default function Player({
               </Badge>
             )}
             {active?.subs && <Badge tone="cyan">Subs</Badge>}
-            <Badge tone="muted" title="Use in-player ⚙️ menu for stream audio / dubs">
-              <Volume2 className="h-2.5 w-2.5" /> Audio in Player Menu
-            </Badge>
             {!follow && (
               <button onClick={reloadFrame} title="Reload this server" className="grid h-7 w-7 place-items-center rounded-lg border border-white/12 text-textSub hover:border-primary/40 hover:text-white">
                 <RefreshCw className="h-3.5 w-3.5" />
@@ -841,9 +838,9 @@ export default function Player({
         )}
       </div>
 
-      {/* we cannot read a dub out of someone else's player, so we say what we asked for */}
+      {/* dub notice removed */}
       <AnimatePresence>
-        {dubNotice && (
+        {false && dubNotice && (
           <motion.div
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1032,11 +1029,6 @@ export default function Player({
           </button>
         </div>
       </motion.div>
-
-      <p className="mt-2 flex items-center gap-1.5 px-1 text-[11px] text-textMuted">
-        <Loader className="h-3 w-3" />
-        Free embed servers rate-limit and disappear often. {active?.blurb}
-      </p>
 
       <PlaybackPanel
         open={panel}

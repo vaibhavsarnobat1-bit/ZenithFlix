@@ -267,7 +267,6 @@ export default function Watch() {
                 <span className="tabular">{yearOf(details)}</span>
                 {age && <Badge tone="gold">{age}</Badge>}
                 <Badge tone="muted">Quality unverified</Badge>
-                {details.original_language && <Badge tone="violet">{details.original_language.toUpperCase()} · TMDB title language</Badge>}
                 {rating && <span className="tabular text-gold">{rating}/10</span>}
                 {details.number_of_seasons && <span>{details.number_of_seasons} season{details.number_of_seasons > 1 ? 's' : ''}</span>}
                 {details.runtime && <span className="tabular">{runtimeLabel(details.runtime)}</span>}
