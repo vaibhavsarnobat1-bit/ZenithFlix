@@ -199,7 +199,7 @@ export default function TopNav() {
     >
       <div className="flex h-[58px] items-center gap-3 px-[4vw] sm:gap-5">
         <button onClick={() => navigate('/')} className="flex-shrink-0" aria-label="ZenithFlix home">
-          <Logo compact={solid || onWatch} />
+          <Logo3D compact={solid || onWatch} size="sm" />
         </button>
 
         {/* nav */}
@@ -333,9 +333,13 @@ export default function TopNav() {
             </AnimatePresence>
           </div>
 
-          <Picker icon={Globe} label="Subtitle & title language" value={language} onChange={setLanguage} options={LANGUAGES} />
+          <div className="hidden sm:block">
+            <Picker icon={Globe} label="Subtitle & title language" value={language} onChange={setLanguage} options={LANGUAGES} />
+          </div>
 
-          <Picker icon={Globe} label="Releases from" value={region} onChange={setRegion} options={WATCH_REGIONS} width="w-56" />
+          <div className="hidden md:block">
+            <Picker icon={Globe} label="Releases from" value={region} onChange={setRegion} options={WATCH_REGIONS} width="w-56" />
+          </div>
 
           {/* Prominent Live Watch Party Room button */}
           <motion.button
@@ -344,9 +348,10 @@ export default function TopNav() {
             transition={spring.snappy}
             style={{ transformPerspective: 500 }}
             onClick={() => navigate('/create-group')}
-            className="btn-3d flex items-center gap-1.5 rounded-xl border border-primary/45 bg-primary/20 px-3 py-1.5 text-xs font-bold text-white shadow-glow-sm transition-colors hover:bg-primary/30"
+            className="btn-3d flex items-center gap-1 sm:gap-1.5 rounded-xl border border-primary/45 bg-primary/20 px-2 py-1.5 sm:px-3 sm:py-1.5 text-[11px] sm:text-xs font-bold text-white shadow-glow-sm transition-colors hover:bg-primary/30"
           >
-            <Users className="h-3.5 w-3.5 text-primaryLight" /> Watch Party
+            <Users className="h-3.5 w-3.5 text-primaryLight" />
+            <span className="hidden sm:inline">Watch Party</span>
           </motion.button>
 
           <motion.button
@@ -354,7 +359,7 @@ export default function TopNav() {
             whileHover={{ scale: 1.1, rotate: 4, y: -2 }}
             whileTap={{ scale: 0.85, rotate: -4 }}
             transition={spring.pop}
-            className="btn-3d btn-3d-ember grid h-9 w-9 place-items-center rounded-lg bg-ember-gradient text-[11px] font-black text-white shadow-glow-sm"
+            className="btn-3d btn-3d-ember grid h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0 place-items-center rounded-lg bg-ember-gradient text-[10.5px] sm:text-[11px] font-black text-white shadow-glow-sm"
             title={getUserName() ? getUserName() : 'Sign in'}
           >
             {(getUserName() || 'G').slice(0, 2).toUpperCase()}
