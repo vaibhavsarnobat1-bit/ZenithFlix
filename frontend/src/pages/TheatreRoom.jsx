@@ -141,6 +141,8 @@ function TheatreRoomInner() {
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');
   const [showChat, setShowChat] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [recentMessage, setRecentMessage] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [chatHovered, setChatHovered] = useState(false);
   const [tab, setTab] = useState('chat');
@@ -407,7 +409,14 @@ function TheatreRoomInner() {
       roomRef.current = { ...roomRef.current, users };
       setRoom(roomRef.current);
     });
-    sock.on('receive_message', (message) => setMessages((previous) => [...previous, message]));
+    sock.on('receive_message', (message) => {
+      setMessages((previous) => [...previous, message]);
+      setUnreadCount((c) => c + 1);
+      setRecentMessage(message);
+      setTimeout(() => {
+        setRecentMessage((prev) => (prev?.id === message.id ? null : prev));
+      }, 5000);
+    });
     sock.on('now_playing', applyTitle);
     sock.on('source_changed', applySource);
     sock.on('party_control', applyControl);
@@ -696,17 +705,37 @@ function TheatreRoomInner() {
           <div className="flex items-center gap-2">
             <Badge tone={joined ? 'live' : 'muted'}><Wifi className="h-2.5 w-2.5" /> {leaving ? 'Leaving' : joined ? 'Joined' : status === 'error' ? 'Not joined' : status === 'reconnecting' ? 'Reconnecting' : 'Joining'}</Badge>
             <div className="hidden -space-x-2 sm:flex">{room.users.slice(0, 4).map((user) => <Avatar key={user.id} name={user.username} isHost={user.id === room.hostId} />)}</div>
-            <button ref={chatToggleRef} onClick={() => setShowChat((value) => !value)} aria-expanded={showChat} aria-controls="theatre-room-rail" aria-label={showChat ? 'Close chat and participants' : 'Open chat and participants'} className={`${btn} ${showChat ? 'border-primary/40 bg-primary/15 text-white' : ''}`}><MessageSquare className="h-3.5 w-3.5" /> Chat</button>
+            <button
+              ref={chatToggleRef}
+              onClick={() => {
+                setShowChat((value) => !value);
+                setUnreadCount(0);
+              }}
+              aria-expanded={showChat}
+              aria-controls="theatre-room-rail"
+              aria-label={showChat ? 'Close chat and participants' : 'Open chat and participants'}
+              className={`relative ${btn} ${showChat ? 'border-primary/40 bg-primary/15 text-white' : ''}`}
+            >
+              <MessageSquare className="h-3.5 w-3.5" /> Chat
+              {unreadCount > 0 && !showChat && (
+                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-ember-500 px-1 text-[9px] font-bold text-white shadow-glow-sm animate-pulse">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
           </div>
         </div>
 
         {/* Compact invite row: single icon button + participants badge */}
         <div className="flex flex-wrap items-center gap-2 border-t border-white/[0.05] px-3 py-2 sm:px-4">
+          <button disabled={!joined || leaving} onClick={() => setShowQueue((value) => !value)} className={`${btn} border-primary/45 bg-primary/20 text-white font-bold shadow-glow-sm`}><Search className="h-3.5 w-3.5 text-primary" /> Search & Change Movie</button>
+          <button disabled={!joined || !now} onClick={() => control(playing ? 'pause' : 'play')} title="Synchronized play/pause for everyone in the room" className={`${btn} border-transparent bg-ember-gradient text-white shadow-glow-sm font-bold`}>{playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}{playing ? 'Pause for all' : 'Play for all'}</button>
+          <button disabled={!joined || !now} onClick={restart} className={btn}><RefreshCw className="h-3.5 w-3.5" /> Restart</button>
           <button
             onClick={copyInvite}
             disabled={!invite.url}
             title={copied ? 'Link copied!' : invite.isPublic ? 'Copy invite link' : 'Copy local invite link'}
-            className={`${btn} border-primary/45 bg-primary/15 text-white`}
+            className={`${btn} border-white/10 bg-white/[0.04] text-textSub hover:text-white`}
           >
             {copied ? <Check className="h-3.5 w-3.5 text-lime" /> : <Link2 className="h-3.5 w-3.5" />}
             {copied ? 'Copied!' : 'Invite'}
@@ -726,14 +755,11 @@ function TheatreRoomInner() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 border-t border-white/[0.05] px-3 py-2 sm:px-4">
-          <button disabled={!joined || leaving} onClick={() => setShowQueue((value) => !value)} className={`${btn} ${showQueue ? 'border-primary/45 bg-primary/15 text-white' : ''}`}><ListVideo className="h-3.5 w-3.5" /> Search & Change Movie</button>
           {tv && <div className="flex items-center gap-1 rounded-xl border border-white/12 px-1 py-0.5">
             <button disabled={!joined || (now.episode || 1) <= 1} onClick={() => requestHost('select_title', { nowPlaying: { ...now, episode: Math.max(1, (now.episode || 1) - 1) } })} className="h-7 w-7 text-textSub disabled:opacity-40" aria-label="Previous episode">‹</button>
             <span className="px-1 text-[11px] font-bold tabular text-white">S{now.season}·E{now.episode}</span>
             <button disabled={!joined} onClick={() => requestHost('select_title', { nowPlaying: { ...now, episode: (now.episode || 1) + 1 } })} className="h-7 w-7 text-textSub disabled:opacity-40" aria-label="Next episode">›</button>
           </div>}
-          <button disabled={!joined || !now} onClick={() => control(playing ? 'pause' : 'play')} title="Synchronized play/pause for everyone in the room" className={`${btn} border-transparent bg-ember-gradient text-white shadow-glow-sm`}>{playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}{playing ? 'Pause for all' : 'Play for all'}</button>
-          <button disabled={!joined || !now} onClick={restart} className={btn}><RefreshCw className="h-3.5 w-3.5" /> Restart</button>
           {now && <form className="flex min-w-0 flex-wrap items-center gap-1.5" onSubmit={(event) => {
             event.preventDefault();
             const target = Number(seekTime);
@@ -785,6 +811,34 @@ function TheatreRoomInner() {
                   {joined && room.isHost && <motion.div variants={item} className="mt-5"><button disabled={!canHost} onClick={() => setShowQueue(true)} className="mx-auto flex items-center gap-2 rounded-2xl bg-ember-gradient px-5 py-2.5 text-sm font-bold text-white shadow-glow-md disabled:opacity-40"><Search className="h-4 w-4" /> Find something to watch</button></motion.div>}
                 </motion.div></div>}
         </main>
+
+        {/* Fullscreen message popup / floating preview when chat is closed */}
+        <AnimatePresence>
+          {!showChat && recentMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              onClick={() => {
+                setShowChat(true);
+                setUnreadCount(0);
+              }}
+              className="pointer-events-auto fixed bottom-6 right-6 z-[10000] flex max-w-sm cursor-pointer items-center gap-3 rounded-2xl border border-white/15 bg-black/80 px-4 py-3 shadow-2xl backdrop-blur-2xl transition hover:border-primary/50"
+              style={{ backdropFilter: 'blur(20px)' }}
+            >
+              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-ember-gradient font-bold text-white shadow-glow-sm">
+                <MessageSquare className="h-4 w-4" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="truncate text-xs font-bold text-primary">{recentMessage.username}</p>
+                  <span className="text-[10px] text-textMuted">Tap to reply</span>
+                </div>
+                <p className="truncate text-[13px] text-white/90">{recentMessage.message}</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <AnimatePresence>{showChat && <motion.aside
           id="theatre-room-rail"

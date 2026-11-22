@@ -32,6 +32,26 @@ const FALLBACK = [
     patterns: { movie: 'https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8', tv: 'https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8' },
   },
   {
+    id: 'hindi-vidsrc', label: '⚡ Hindi Hub 1 · VidSrc Multi', kind: 'embed', quality: '1080p', tier: 1, subs: true, sandboxOk: false,
+    blurb: 'High-speed Hindi Dubbed & Multi-audio stream (vidsrc.vip / moviesapi).',
+    patterns: { movie: 'https://vidsrc.vip/embed/movie/{tmdbId}?ds_lang=hi', tv: 'https://vidsrc.vip/embed/tv/{tmdbId}/{season}/{episode}?ds_lang=hi' },
+  },
+  {
+    id: 'hindi-superembed', label: '⚡ Hindi Hub 2 · SuperEmbed Pro', kind: 'embed', quality: '1080p', tier: 1, subs: true, sandboxOk: true,
+    blurb: 'Fast Hindi & Dual audio streaming server (seapi / multi).',
+    patterns: { movie: 'https://multiembed.mov/?video_id={tmdbId}&tmdb=1', tv: 'https://multiembed.mov/?video_id={tmdbId}&tmdb=1&s={season}&e={episode}' },
+  },
+  {
+    id: 'hindi-filmku', label: '⚡ Hindi Hub 3 · MoviesAPI Dual', kind: 'embed', quality: '1080p', tier: 1, subs: true, sandboxOk: true,
+    blurb: 'Dedicated Hindi Dubbed audio priority stream.',
+    patterns: { movie: 'https://moviesapi.club/movie/{tmdbId}', tv: 'https://moviesapi.club/tv/{tmdbId}-{season}-{episode}' },
+  },
+  {
+    id: 'hindi-smashystream', label: '⚡ Hindi Hub 4 · Smashy Multi', kind: 'embed', quality: '1080p', tier: 1, subs: true, sandboxOk: true,
+    blurb: 'Aggregated dual-audio Hindi server with reliable multi-stream.',
+    patterns: { movie: 'https://player.smashystream.com/playere.php?tmdb={tmdbId}&lang=hi', tv: 'https://player.smashystream.com/playere.php?tmdb={tmdbId}&season={season}&episode={episode}&lang=hi' },
+  },
+  {
     id: 'autoembed-multi', label: '🔥 AutoEmbed · Multi-Audio (Nitro)', kind: 'embed', quality: '1080p', tier: 1, subs: true, sandboxOk: true,
     blurb: 'AutoEmbed Multi-Language player with in-player Audio menu (Hindi, Tamil, Telugu, Malayalam, Kannada), Nitro server & 1080p quality selector.',
     patterns: { movie: 'https://nxsha.space/embed/movie/{tmdbId}', tv: 'https://nxsha.space/embed/tv/{tmdbId}/{season}/{episode}' },
@@ -140,7 +160,7 @@ const FALLBACK = [
   },
 ].map(unsupportedAudio);
 
-const FALLBACK_ORDER = ['autoembed-multi', 'autoembed-hindi', 'autoembed-nitro', 'zxc-hindi', 'vidsrcpm', 'autoembed-tamil', 'autoembed-telugu', 'vidlink', 'videasy', 'autoembed', 'smashy', '2embed', '2embedskin', 'vidfast', 'vidfastvc', 'embed-su-hindi', 'moviebox-hindi'];
+const FALLBACK_ORDER = ['hindi-vidsrc', 'hindi-superembed', 'hindi-filmku', 'hindi-smashystream', 'autoembed-multi', 'autoembed-hindi', 'autoembed-nitro', 'zxc-hindi', 'vidsrcpm', 'autoembed-tamil', 'autoembed-telugu', 'vidlink', 'videasy', 'autoembed', 'smashy', '2embed', '2embedskin', 'vidfast', 'vidfastvc', 'embed-su-hindi', 'moviebox-hindi'];
 
 // Only hosts that literally refuse to run if sandboxed (2Embed ships an overlay)
 const CAGE_SNIFFERS = ['2embed', '2embedskin'];

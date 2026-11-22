@@ -55,6 +55,58 @@ const PROVIDERS = [
     },
   }),
 
+  P('hindi-vidsrc', '⚡ Hindi Hub 1 · VidSrc Multi', {
+    kind: 'embed',
+    blurb: 'High-speed Hindi Dubbed & Multi-audio stream (vidsrc.vip / moviesapi).',
+    quality: '1080p',
+    tier: 1,
+    subs: true,
+    sandboxOk: false,
+    patterns: {
+      movie: 'https://vidsrc.vip/embed/movie/{tmdbId}?ds_lang=hi',
+      tv: 'https://vidsrc.vip/embed/tv/{tmdbId}/{season}/{episode}?ds_lang=hi',
+    },
+  }),
+
+  P('hindi-superembed', '⚡ Hindi Hub 2 · SuperEmbed Pro', {
+    kind: 'embed',
+    blurb: 'Fast Hindi & Dual audio streaming server (seapi / multi).',
+    quality: '1080p',
+    tier: 1,
+    subs: true,
+    sandboxOk: true,
+    patterns: {
+      movie: 'https://multiembed.mov/?video_id={tmdbId}&tmdb=1',
+      tv: 'https://multiembed.mov/?video_id={tmdbId}&tmdb=1&s={season}&e={episode}',
+    },
+  }),
+
+  P('hindi-filmku', '⚡ Hindi Hub 3 · MoviesAPI Dual', {
+    kind: 'embed',
+    blurb: 'Dedicated Hindi Dubbed audio priority stream.',
+    quality: '1080p',
+    tier: 1,
+    subs: true,
+    sandboxOk: true,
+    patterns: {
+      movie: 'https://moviesapi.club/movie/{tmdbId}',
+      tv: 'https://moviesapi.club/tv/{tmdbId}-{season}-{episode}',
+    },
+  }),
+
+  P('hindi-smashystream', '⚡ Hindi Hub 4 · Smashy Multi', {
+    kind: 'embed',
+    blurb: 'Aggregated dual-audio Hindi server with reliable multi-stream.',
+    quality: '1080p',
+    tier: 1,
+    subs: true,
+    sandboxOk: true,
+    patterns: {
+      movie: 'https://player.smashystream.com/playere.php?tmdb={tmdbId}&lang=hi',
+      tv: 'https://player.smashystream.com/playere.php?tmdb={tmdbId}&season={season}&episode={episode}&lang=hi',
+    },
+  }),
+
   P('autoembed-multi', '🔥 AutoEmbed · Multi-Audio (Nitro)', {
     kind: 'embed',
     blurb: 'AutoEmbed Multi-Language player with in-player Audio menu (Hindi, Tamil, Telugu, Malayalam, Kannada), Nitro server & 1080p quality selector.',
