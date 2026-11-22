@@ -702,17 +702,14 @@ export default function Player({
               whileTap={{ scale: 0.97 }}
               transition={spring.snappy}
               title="All Servers & Audio Settings"
-              className="group flex items-center gap-2 rounded-xl border border-primary/50 bg-primary/[0.12] px-3 py-1.5 text-[11.5px] font-bold text-white transition-colors hover:bg-primary/[0.2]"
+              className="group flex items-center gap-2 rounded-xl border border-primary/50 bg-primary/[0.15] px-3.5 py-1.5 text-[12px] font-bold text-white shadow-glow-sm transition-all hover:bg-primary/[0.25]"
             >
-              <Sliders className="h-3.5 w-3.5 text-primary" />
+              <Sliders className="h-4 w-4 text-primary" />
               <span>Audio & Server Settings</span>
-              {/* Anything the slide changed beyond its defaults, shown where it
-                  matters: "Ads allowed" here is the viewer's warning that the
-                  pop-up guard is off. */}
-              {playbackChips.map((chip) => (
-                <span key={chip} className="rounded-md bg-white/12 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-textSub">{chip}</span>
-              ))}
-              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${currentDead ? 'bg-gold' : currentVerdict ? 'bg-lime' : 'bg-white/35'}`} />
+              <span className="rounded-md bg-white/15 px-2 py-0.5 text-[10.5px] font-bold text-primary">
+                {DUB_LANGS.find((l) => l.code === currentDub)?.label || 'Hindi (हिन्दी)'}
+              </span>
+              <span className={`h-2 w-2 shrink-0 rounded-full ${currentDead ? 'bg-gold' : currentVerdict ? 'bg-lime' : 'bg-white/35'}`} />
             </motion.button>
           )}
 
@@ -773,7 +770,7 @@ export default function Player({
         </div>
 
         {/* Dubbing shortcuts / Language Category Tabs */}
-        {!follow && (
+        {!follow && false && (
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
             <span className="mr-1 flex shrink-0 items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-textMuted">
               <Languages className="h-3 w-3 text-primary" /> Audio Language:
@@ -801,7 +798,7 @@ export default function Player({
         )}
 
         {/* Filtered Servers under selected language category */}
-        {!follow && (
+        {!follow && false && (
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
             <span className="text-[11px] font-bold uppercase tracking-wider text-textMuted shrink-0 mr-1 flex items-center gap-1">
               <Server className="h-3 w-3 text-secondary" /> {DUB_LANGS.find((l) => l.code === selectedCategory)?.label || 'Selected'} Servers:

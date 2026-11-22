@@ -1,8 +1,27 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, HardDrive, Languages, Server, Shield, Subtitles, TriangleAlert, X } from 'lucide-react';
 import { scrim, spring } from '../lib/motion';
 import { languageName } from '../lib/providers';
+
+const DUB_SERVER_MAP = {
+  hi: ['hindi-vidsrc', 'hindi-superembed', 'hindi-filmku', 'hindi-smashystream', 'autoembed-hindi', 'autoembed-nitro', 'autoembed-multi', 'zxc-hindi', 'embed-su-hindi', 'moviebox-hindi'],
+  ta: ['autoembed-tamil', 'autoembed-multi', 'zxc-tamil'],
+  te: ['autoembed-telugu', 'autoembed-multi', 'zxc-telugu'],
+  ml: ['autoembed-multi'],
+  kn: ['autoembed-multi'],
+  en: ['vidsrcpm', 'vidlink', 'videasy', 'autoembed', 'smashy', '2embed', '2embedskin', 'vidfast', 'vidfastvc'],
+};
+
+const PANEL_LANGS = [
+  { code: 'hi', label: 'Hindi (हिन्दी)' },
+  { code: 'en', label: 'English' },
+  { code: 'ta', label: 'Tamil (தமிழ்)' },
+  { code: 'te', label: 'Telugu (తెలుగు)' },
+  { code: 'ml', label: 'Malayalam' },
+  { code: 'kn', label: 'Kannada' },
+  { code: 'all', label: 'All Servers' },
+];
 
 // This ranks servers by their advertised ceiling. It is NOT video track selection.
 const SERVER_PREFERENCES = [
@@ -45,6 +64,7 @@ export default function PlaybackPanel({
   quality, onQuality, subsOnly, onSubsOnly, blockPopups, onBlockPopups, dubs, title = '',
   onSelectAudioTrack, onSelectLevel,
 }) {
+  const [panelLang, setPanelLang] = useState('hi');
   const embeds = useMemo(() => providers.filter((p) => p.kind === 'embed' || p.kind === 'hls'), [providers]);
   const preference = SERVER_PREFERENCES.find((p) => p.id === quality);
   const answered = embeds.filter((p) => health?.servers?.[p.id]?.ok === true).length;
@@ -162,15 +182,47 @@ export default function PlaybackPanel({
                 </>
               )}
             </Section>
-            <Section icon={Server} label="Server" note={`${answered} of ${embeds.length} hosts answered the reachability probe; ${unknown} unchecked. A successful host response does not confirm this title, audio tracks or video resolutions.`}>
-              {embeds.map((p) => {
-                const verdict = health?.servers?.[p.id];
-                const dead = verdict?.ok === false;
-                const allowed = !subsOnly || p.subs;
-                return <Row key={p.id} selected={p.id === server} onSelect={() => { onServer(p.id); onClose(); }} title={p.label}
-                  sub={dead ? `Offline — ${verdict.reason}` : !allowed ? 'No advertised subtitle support' : `${cageNote(p)}${p.blurb}`}
-                  disabled={!allowed} badge={<span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dead ? 'bg-gold' : verdict?.ok ? 'bg-lime' : 'bg-white/25'}`} />} />;
-              })}
+            <Section icon={Server} label="Select Server By Language" note="Choose your audio language to see its working servers:">
+              <div className="mb-3 flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+                {PANEL_LANGS.map((pl) => (
+                  <button
+                    key={pl.code}
+                    type="button"
+                    onClick={() => setPanelLang(pl.code)}
+                    className={`shrink-0 rounded-lg border px-3 py-1.5 text-[11.5px] font-bold transition-all ${
+                      panelLang === pl.code
+                        ? 'border-primary bg-primary text-white shadow-glow-sm'
+                        : 'border-white/10 bg-white/[0.04] text-textSub hover:border-white/25 hover:text-white'
+                    }`}
+                  >
+                    {pl.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                {embeds
+                  .filter((p) => {
+                    if (panelLang === 'all') return true;
+                    const allowed = DUB_SERVER_MAP[panelLang];
+                    return allowed ? allowed.includes(p.id) : true;
+                  })
+                  .map((p) => {
+                    const verdict = health?.servers?.[p.id];
+                    const dead = verdict?.ok === false;
+                    const allowed = !subsOnly || p.subs;
+                    return (
+                      <Row
+                        key={p.id}
+                        selected={p.id === server}
+                        onSelect={() => { onServer(p.id); onClose(); }}
+                        title={p.label}
+                        sub={dead ? `Offline — ${verdict.reason}` : !allowed ? 'No advertised subtitle support' : `${cageNote(p)}${p.blurb}`}
+                        disabled={!allowed}
+                        badge={<span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dead ? 'bg-gold' : verdict?.ok ? 'bg-lime' : 'bg-white/25'}`} />}
+                      />
+                    );
+                  })}
+              </div>
             </Section>
             <Section icon={HardDrive} label="Server preference" note="Ranks servers using their advertised ceiling, not the current stream. This does not change playback resolution or enable adaptive bitrate. Changes apply on the next server switch.">
               <div className="grid grid-cols-3 gap-1.5">
