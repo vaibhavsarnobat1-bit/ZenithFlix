@@ -140,7 +140,7 @@ function TheatreRoomInner() {
   const [leaving, setLeaving] = useState(false);
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');
-  const [showChat, setShowChat] = useState(false);
+  const [showChat, setShowChat] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 768);
   const [unreadCount, setUnreadCount] = useState(0);
   const [recentMessage, setRecentMessage] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -846,11 +846,11 @@ function TheatreRoomInner() {
           onMouseEnter={() => setChatHovered(true)}
           onMouseLeave={() => setChatHovered(false)}
           initial={{ opacity: 0, x: 24 }}
-          animate={{ opacity: chatHovered ? 1 : 0.55, x: 0 }}
+          animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: 24 }}
           transition={spring.snappy}
-          className="pointer-events-auto fixed bottom-0 right-0 top-0 z-[9999] flex w-[280px] flex-col overflow-hidden border-l border-white/[0.08] bg-black/60 backdrop-blur-2xl sm:w-[300px]"
-          style={{ backdropFilter: 'blur(20px) saturate(1.4)' }}
+          className="pointer-events-auto fixed bottom-0 right-0 top-0 z-[9999] flex w-[300px] sm:w-[320px] flex-col overflow-hidden border-l border-white/[0.12] bg-[#0c0c14]/90 shadow-2xl backdrop-blur-2xl"
+          style={{ backdropFilter: 'blur(24px) saturate(1.5)' }}
         >
           <div className="flex flex-shrink-0 gap-1 border-b border-white/[0.07] p-2">
             {[{ id: 'chat', icon: MessageSquare, label: `Chat ${messages.length ? `(${messages.length})` : ''}` }, { id: 'members', icon: Users, label: `Members (${room.users.length})` }].map((entry) => <button key={entry.id} onClick={() => setTab(entry.id)} aria-pressed={tab === entry.id} className={`relative min-w-0 flex-1 rounded-xl py-2 text-[11.5px] font-bold transition-colors ${tab === entry.id ? 'text-white' : 'text-textMuted hover:text-textSub'}`}>
